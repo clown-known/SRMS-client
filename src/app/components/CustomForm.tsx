@@ -2,14 +2,14 @@ import { Box, Button, CircularProgress, TextField, Typography } from '@mui/mater
 import React from 'react'
 
 interface CustomFormProps{
-    title: string;
+    title?: string;
     description?: string;
     fields: {
       label: string;
       type?: string;
       placeholder?: string;
-      value: string;
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+      value?: string;
+      onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     }[]
     submitButtonText: string;
     onSubmit: () => void;

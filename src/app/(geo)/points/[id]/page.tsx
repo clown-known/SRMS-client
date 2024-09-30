@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Box, Button, Typography, IconButton } from '@mui/material';
+import { Box, Button, Typography, IconButton, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -17,7 +17,7 @@ const PointDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { id } = useParams(); 
+  const { id } = useParams();
 
   useEffect(() => {
     if (!id) {
@@ -29,8 +29,8 @@ const PointDetail = () => {
       setIsLoading(true);
       setError('');
       try {
-        const response = await fetch(`http://localhost:3005/points/${id}`);
-        
+        const response = await fetch(`http://localhost:3002/points/${id}`);
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -45,12 +45,20 @@ const PointDetail = () => {
     };
 
     fetchPointDetail();
-  }, [id]);
+  }, [id, router]);
 
-  const CapitalizeString = (string: string) => {
+  const capitalizeString = (string: string) => {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
+
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
 
   return (
     <Box className="flex">
@@ -67,37 +75,48 @@ const PointDetail = () => {
 
         <Box className="flex justify-between items-center mb-4">
           <Typography variant="h4">{point?.name || 'Loading...'}</Typography>
-          <Button variant="contained" sx={{ backgroundColor: 'black', color: 'white' }}>
+          <Button 
+            variant="contained" 
+            sx={{ backgroundColor: 'black', color: 'white' }} 
+            onClick={() => router.push(`/points/${id}/edit`)} 
+          >
             Edit Point
           </Button>
         </Box>
 
         <Box className="bg-gray-100 rounded-lg p-4 mb-4 flex justify-between">
           <Box className="mb-4">
-            <Typography variant="body1" className="flex items-center">
+            <Box className="flex items-center">
               <AnchorIcon color="primary" className="mr-1" />
               <Box>
                 <Typography variant="body2" className="font-extralight">Type:</Typography>
-                <Typography variant="body2" className="font-semibold text-lg">{CapitalizeString(point?.type) || 'Loading...'}</Typography>
+                <Typography variant="body2" className="font-semibold text-lg">
+                  {capitalizeString(point?.type) || 'Loading...'}
+                </Typography>
               </Box>
-            </Typography>
+            </Box>
           </Box>
           <Box className="mb-4">
-            <Typography variant="body1" className="flex items-center">
+            <Box className="flex items-center">
               <LocationOnIcon className="mr-1" />
               <Box>
                 <Typography variant="body2" className="font-extralight">Coordinates:</Typography>
-                <Typography variant="body2" className="font-semibold text-lg">{point?.latitude}, {point?.longitude}</Typography>
+                <Typography variant="body2" className="font-semibold text-lg">
+                  {point?.latitude.toFixed(3)}, {point?.longitude.toFixed(3)}
+                </Typography>
               </Box>
-            </Typography>
+            </Box>
           </Box>
         </Box>
 
         <Box className="mb-4">
-          <Typography variant="h6" className="flex items-center mb-2">
-            <DescriptionIcon className="mr-2 " /> Description
+          <Box className="flex items-center mb-2">
+            <DescriptionIcon className="mr-2" />
+            <Typography variant="h6">Description</Typography>
+          </Box>
+          <Typography variant="body1" className="text-lg">
+            {point?.description || 'Loading...'}
           </Typography>
-          <Typography variant="body1" className="text-lg">{point?.description || 'Loading...'}</Typography>
         </Box>
       </Box>
     </Box>

@@ -1,90 +1,115 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import dynamic from 'next/dynamic';
-import { Box, Button, TextField, Typography, Pagination } from '@mui/material';
-import AnchorIcon from '@mui/icons-material/Anchor';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import debounce from 'lodash/debounce';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Box, Button, TextField, Typography, Pagination, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, } from "@mui/material";
+import AnchorIcon from "@mui/icons-material/Anchor";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
+// Load the map component
+const Map = dynamic(() => import("@/app/components/Map"), { ssr: false });
 
 const Points = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchKey") || "");
   const [points, setPoints] = useState<any[]>([]);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   
+  // Set initial page number from search params
+  const page = parseInt(searchParams.get("page") || "1", 10);
 
-  const fetchPoints = useCallback(async (currentPage: number, search: string) => {
+  // Fetch points
+  const fetchPoints = useCallback(async (currentPage: number, searchKey: string) => {
     setIsLoading(true);
-    setError('');
+    setError("");
     try {
-      const searchParam = search ? `&searchKey=${encodeURIComponent(search)}` : '';
-      const response = await fetch(`http://localhost:3005/points?page=${currentPage}&take=3${searchParam}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      const searchParam = searchKey ? `&searchKey=${encodeURIComponent(searchKey)}` : "";
+      const response = await fetch(`http://localhost:3002/points?page=${currentPage}&take=3${searchParam}`);
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
       const result = await response.json();
-      if (result.data && result.data.data && Array.isArray(result.data.data)) {
+      if (result.data?.data && Array.isArray(result.data.data)) {
         setPoints(result.data.data);
         setTotalPages(Math.ceil(result.data.meta.itemCount / 3));
       } else {
-        throw new Error('Unexpected data structure');
+        throw new Error("Unexpected data structure");
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to fetch points');
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch points");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const debouncedFetch = useCallback(
-    debounce((search: string) => {
-      setPage(1);
-      fetchPoints(1, search);
-    }, 300),
-    [fetchPoints]
-  );
-
   useEffect(() => {
-    fetchPoints(page, searchTerm);
-  }, [page, fetchPoints]);
+    fetchPoints(page, searchParams.get("searchKey") || "");
+  }, [page, searchParams, fetchPoints]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value;
-    setSearchTerm(newSearchTerm);
-    debouncedFetch(newSearchTerm);
+  // Handle search
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
+  // Submit search on button click or Enter key press
+  const handleSearchSubmit = () => {
+    router.push(`/points?page=1&searchKey=${encodeURIComponent(searchTerm)}`);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSearchSubmit();
+  };
+
+  // Handle pagination change
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value);
+    const searchKey = searchTerm ? `&searchKey=${encodeURIComponent(searchTerm)}` : "";
+    router.push(`/points?page=${value}${searchKey}`);
   };
 
-  const CapitalizeString = (string: string) => {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
+  // Delete point
+  const handleDelete = async () => {
+    if (!selectedPointId) return;
+    try {
+      const response = await fetch(`http://localhost:3002/points/${selectedPointId}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(`Failed to delete point. Status: ${response.status}`);
+
+      fetchPoints(page, searchTerm); // Refresh points after deletion
+      handleCloseDialog();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete point");
+    }
   };
 
-  const detailPoint = (id: string) => {
-    router.push(`/points/${id}`);
-  }
+  // Capitalize first letters
+  const capitalizeString = (string: string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+  // Open and close dialog delete confirmation
+  const handleOpenDialog = (id: string) => {
+    setSelectedPointId(id);
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setSelectedPointId(null);
+  };
 
   return (
     <Box className="flex">
       <Box className="w-1/2 p-4">
+        {/* Map move to current location automatically */}
         <Map moveToCurrentLocation={true} />
       </Box>
       <Box className="w-1/2 p-4">
         <Box className="flex justify-between items-center mb-4">
           <Typography variant="h4">Shipping Points</Typography>
-          <Button variant="contained" sx={{ backgroundColor: 'black', color: 'white' }}>
+          <Button variant="contained" sx={{ backgroundColor: "black", color: "white" }} onClick={() => router.push("/points/create")}>
             Add Point
           </Button>
         </Box>
@@ -93,46 +118,65 @@ const Points = () => {
             variant="outlined"
             placeholder="Search points..."
             value={searchTerm}
-            onChange={handleSearch}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyPress}
             fullWidth
-            sx={{ borderRadius: '30px' }}
+            sx={{ borderRadius: "30px" }}
           />
+          <Button variant="contained" onClick={handleSearchSubmit} sx={{ ml: 2 }}>
+            Search
+          </Button>
         </Box>
         <Box className="mt-6">
-          {isLoading ? (
-            <Typography>Loading...</Typography>
-          ) : error ? (
-            <Typography color="error">{error}</Typography>
-          ) : points.length > 0 ? (
+          {isLoading && <Typography>Loading...</Typography>}
+          {error && <Typography color="error">{error}</Typography>}
+          {!isLoading && !error && points.length === 0 && <Typography>No points available</Typography>}
+
+          {!isLoading &&
+            !error &&
+            points.length > 0 &&
             points.map((point) => (
               <Box key={point.id} className="bg-white shadow-md rounded-lg p-4 mt-4">
                 <Box className="flex items-center mb-2">
-                  <Typography variant="h6" className="ml-2">{point.name}</Typography>
+                  <Typography variant="h6" className="ml-2">
+                    {point.name}
+                  </Typography>
                 </Box>
                 <Typography variant="body2">
-                  <AnchorIcon color="primary" /> {CapitalizeString(point.type)}
+                  <AnchorIcon color="primary" /> {capitalizeString(point.type)}
                 </Typography>
                 <Typography variant="body2">
-                  <LocationOnIcon /> {point.latitude}, {point.longitude}
+                  <LocationOnIcon /> {point.latitude.toFixed(3)}, {point.longitude.toFixed(3)}
                 </Typography>
                 <Box className="mt-2">
-                  <Button variant="contained" onClick={() => detailPoint(point.id)}>View Details</Button>
-                  <Button variant="contained" color="error" sx={{ ml: 2 }}>Delete</Button>
+                  <Button variant="contained" onClick={() => router.push(`/points/${point.id}`)}>
+                    View Details
+                  </Button>
+                  <Button variant="contained" color="error" sx={{ ml: 2 }} onClick={() => handleOpenDialog(point.id)}>
+                    Delete
+                  </Button>
                 </Box>
               </Box>
-            ))
-          ) : (
-            <Typography variant="body1">No points available</Typography>
-          )}
+            ))}
         </Box>
+
         <Box className="mt-4 flex justify-center">
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-          />
+          <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
         </Box>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={open} onClose={handleCloseDialog}>
+          <DialogTitle>{"Delete Confirmation"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>Are you sure you want to delete this point permanently?</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>No</Button>
+            <Button onClick={handleDelete} autoFocus>
+              Yes
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Box>
   );
