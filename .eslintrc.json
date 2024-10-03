@@ -16,6 +16,39 @@
     "@typescript-eslint/no-shadow": "off",
     "arrow-body-style": "off",
     "import/prefer-default-export": "off",
-    "@typescript-eslint/no-explicit-any": "off"
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "no-param-reassign": "off",
+    "import/extensions": "off",
+    "consistent-return": "off",
+    "prefer-destructuring": "off",
+    "jsx-a11y/anchor-has-content": "off",
+    "react/jsx-props-no-spreading": "off",
+    "no-underscore-dangle": "off",
+    "@typescript-eslint/return-await": "off",
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      {
+        "required": {
+          "some": ["nesting", "id"]
+        }
+      }
+    ],
+    "jsx-a11y/label-has-for": [
+      "error",
+      {
+        "required": {
+          "some": ["nesting", "id"]
+        }
+      }
+    ],
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": false,
+        "optionalDependencies": false,
+        "peerDependencies": false
+      }
+    ]
   }
 }
