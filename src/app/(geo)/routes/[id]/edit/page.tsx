@@ -4,11 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Box, Button, Typography, TextareaAutosize, TextField, Snackbar, Grid, Dialog, DialogTitle, DialogContent, List, ListItemButton, ListItemText, DialogActions, CircularProgress } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import CustomInput from "@/app/components/CustomInput";
+import CustomInput from "@/components/CustomInput";
 import dynamic from "next/dynamic";
 import { calculateDistance } from "@/app/utils/distanceUtils";
 
-const Map = dynamic(() => import("@/app/components/Map"), { ssr: false });
+const Map = dynamic(() => import("@/components/geo/Map"), { ssr: false });
 
 interface Point {
   id: string;

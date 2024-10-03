@@ -6,9 +6,9 @@ import { Box, Button, Typography, Select, MenuItem, TextareaAutosize, Grid, Snac
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
-import CustomInput from '@/app/components/CustomInput';
+import CustomInput from '@/components/CustomInput';
 
-const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
+const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
 const PointEdit = () => {
   const router = useRouter();

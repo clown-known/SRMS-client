@@ -8,7 +8,7 @@ import AnchorIcon from "@mui/icons-material/Anchor";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 // Load the map component
-const Map = dynamic(() => import("@/app/components/Map"), { ssr: false });
+const Map = dynamic(() => import("@/components/geo/Map"), { ssr: false });
 
 const Points = () => {
   const router = useRouter();

@@ -10,7 +10,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
-const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
+const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
 interface Point {
   latitude: number;

@@ -8,7 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import debounce from 'lodash/debounce';
 import dynamic from 'next/dynamic';
 
-const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
+const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
 interface Point {
   latitude: number;
