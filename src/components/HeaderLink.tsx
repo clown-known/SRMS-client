@@ -1,4 +1,3 @@
-import { FC } from 'react';
 import Link from 'next/link';
 import headerNavLinks from '@/data/headerNavLinks';
 
@@ -9,9 +8,9 @@ interface IProps {
 const HeaderLink = (props: IProps) => {
   const { permission } = props;
   const modules =
-    permission.length === 0
-      ? []
-      : Array.from(new Set<string>(permission.map((per) => per.split(':')[0])));
+    permission && permission.length !== 0
+      ? Array.from(new Set<string>(permission.map((per) => per.split(':')[0])))
+      : [];
   return (
     <div className="no-scrollbar hidden max-w-40 items-center space-x-4 overflow-x-auto sm:flex sm:space-x-6 md:max-w-72 lg:max-w-96">
       {headerNavLinks

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAppDispatch } from '@/store/store';
 import { logoutState } from '@/store/userSlice';
+import { Logout } from '@/service/authService';
 
 interface IProps {
   name: string;
@@ -17,6 +18,7 @@ const UserProfileDropdown = (props: IProps) => {
   const dispatch = useAppDispatch();
 
   const handleLogout = () => {
+    Logout();
     dispatch(logoutState());
   };
 
