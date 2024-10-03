@@ -12,12 +12,12 @@ const axiosInstance = axios.create({
 });
 const refreshAccessToken = async () => {
   const refreshToken = Cookies.get('refreshToken');
+  if(refreshToken) return null;
   const response = await axios.get(`http://localhost:3000/authentication-service/auth/refresh`, {
     headers: {
       'Authorization': `Bearer ${refreshToken}`
     }
   });
-  console.log(response)
   return response.data.data.accessToken; // Return the new access token
 };
 
@@ -50,6 +50,7 @@ axiosInstance.interceptors.response.use(
         originalRequest._retry = true; // Mark the request as retried
         try {
           const newAccessToken = await refreshAccessToken();
+          if(newAccessToken) window.location.href = '/login';
           Cookies.set('token', newAccessToken); // Store the new access token
           
           // Update the original request's Authorization header
@@ -58,9 +59,8 @@ axiosInstance.interceptors.response.use(
           // Retry the original request
           return axiosInstance(originalRequest);
         } catch (refreshError) {
-          console.error('Refresh token failed:', refreshError);
-          // Handle refresh failure (e.g., redirect to login)
-          // window.location.href = '/login';
+          Cookies.remove('refreshToken'); 
+          window.location.href = '/login';
           return Promise.reject(refreshError);
         }
         // window.location.href = '/login'; // Redirect to login page

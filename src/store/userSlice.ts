@@ -1,17 +1,27 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import Cookies from 'js-cookie';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import axiosGetMeInstance from '../../axiosGetMeConfig';
 
 interface UserState {
   username: string | null;
   isLoggedIn: boolean;
-  permission: string[]; 
+  permissions: string[]; 
 }
 const initialState: UserState = {
   username: null,
-  isLoggedIn: false,
-  permission: [],
+  isLoggedIn: false, 
+  permissions: [],
 };
-
+export const fetchUserPermissions = createAsyncThunk(
+  'user/fetchUserPermissions',
+  async () => {
+    try{
+      const response = await axiosGetMeInstance.get('authentication-service/auth/get-me'); // Replace with actual API path
+      return response.data.data;
+    }catch(err){
+      return initialState;
+    }
+  }
+);
 export const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -19,40 +29,24 @@ export const userSlice = createSlice({
     loginState: (state, action: PayloadAction<{ username: string, permission?: string[] }>) => {
       state.username = action.payload.username;
       state.isLoggedIn = true;
-      state.permission = action.payload.permission || []; 
-      // Store the username in localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('username', action.payload.username);
-        localStorage.setItem('permission', JSON.stringify(action.payload.permission));
-      }
+      state.permissions = action.payload.permission || []; 
     },
     changeNameState:(state,action: PayloadAction<{ username: string }>)=>{
       state.username = action.payload.username;
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('username')
-        localStorage.setItem('username', action.payload.username);
-      }
     },
     logoutState: (state) => {
       state.username = null;
       state.isLoggedIn = false;
-      state.permission = []; 
+      state.permissions = []; 
     },
-    loadUserFromStorage: (state) => {
-      if (typeof window !== 'undefined') {
-        const username = localStorage.getItem('username');
-        const permisison = localStorage.getItem('permission');
-        if (username) {
-          state.username = username;
-          state.isLoggedIn = true;
-        }
-        if(permisison){
-          state.permission = JSON.parse(permisison)
-        }
-      }
-    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchUserPermissions.fulfilled, (state, action) => {
+      state.permissions = action.payload.permissions;
+      state.username = action.payload.name
+    });
   },
 });
 
-export const { loginState, logoutState,changeNameState, loadUserFromStorage } = userSlice.actions;
+export const { loginState, logoutState,changeNameState } = userSlice.actions;
 export default userSlice.reducer;
