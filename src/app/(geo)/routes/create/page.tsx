@@ -11,7 +11,7 @@ import ListItem from '@mui/material/ListItem';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRouter } from "next/navigation";
 import CustomInput from "@/app/components/CustomInput";
-import { haversineDistance } from "@/app/utils/distanceUtils";
+import { calculateDistance } from "@/app/utils/distanceUtils";
 
 const Map = dynamic(() => import("@/app/components/Map"), { ssr: false });
 
@@ -41,7 +41,6 @@ const RouteCreate = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [routeName, setRouteName] = useState("");
   const [distance, setDistance] = useState<number | string>("");
-  const isButton = true;
 
   const fetchPoints = async (search: string = "") => {
     try {
@@ -89,7 +88,7 @@ const RouteCreate = () => {
       if (endPointId) {
         const endPoint = points.find(p => p.id === endPointId);
         if (endPoint) {
-          const distance = haversineDistance(point.latitude, point.longitude, endPoint.latitude, endPoint.longitude);
+          const distance = calculateDistance(point.latitude, point.longitude, endPoint.latitude, endPoint.longitude);
           setDistance(distance.toFixed(2)); 
         }
       }
@@ -99,7 +98,7 @@ const RouteCreate = () => {
       if (startPointId) {
         const startPoint = points.find(p => p.id === startPointId);
         if (startPoint) {
-          const distance = haversineDistance(startPoint.latitude, startPoint.longitude, point.latitude, point.longitude);
+          const distance = calculateDistance(startPoint.latitude, startPoint.longitude, point.latitude, point.longitude);
           setDistance(distance.toFixed(2));
         }
       }
@@ -109,6 +108,12 @@ const RouteCreate = () => {
 
   const handleCreateRoute = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (!routeName || !startPointId || !endPointId || !distance) {
+      setSnackbarMessage("Please fill in all fields before creating the route.");
+      setSnackbarOpen(true);
+      return;
+    }
   
     try {
       const routeData = {
@@ -146,6 +151,10 @@ const RouteCreate = () => {
       setSnackbarOpen(true);
     }
   };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  }
   
   
   
@@ -246,11 +255,18 @@ const RouteCreate = () => {
         </DialogActions>
       </Dialog>
 
-        <Snackbar
+      <Snackbar
           open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={() => setSnackbarOpen(false)}
+          onClose={handleCloseSnackbar}
           message={snackbarMessage}
+          autoHideDuration={3000} 
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          ContentProps={{
+            style: {
+              backgroundColor: snackbarMessage.includes('successfully') ? '#4caf50' : '#f44336',
+              color: '#fff', 
+            },
+          }}
         />
       </Box>
     </Box>

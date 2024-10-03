@@ -12,13 +12,20 @@ import { useParams } from 'next/navigation';
 
 const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
 
-interface Route {
-  id: string;
+interface Point {
+  latitude: number;
+  longitude: number;
   name: string;
-  description: string;
+}
+
+interface Route {
+  id: number;
+  name: string;
+  startPoint: Point;
+  endPoint: Point;
   distance: number;
-  startPoint?: { name: string; description: string };
-  endPoint?: { name: string; description: string };
+  points: Point[];
+  description?: string; 
 }
 
 const RouteDetail: React.FC = () => {
@@ -53,7 +60,15 @@ const RouteDetail: React.FC = () => {
   return (
     <Box className="flex">
       <Box className="w-1/2 p-4">
-        <Map moveToCurrentLocation={true} />
+        {route ? (
+          <Map 
+            routes={[route]} 
+            singleRouteMode={true}
+            center={[route.startPoint.latitude, route.startPoint.longitude]}
+          />
+        ) : (
+          <CircularProgress />
+        )}
       </Box>
       <Box className="w-1/2 p-4">
         <Box className="flex items-center mb-6">

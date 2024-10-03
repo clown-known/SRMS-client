@@ -10,32 +10,38 @@ import dynamic from 'next/dynamic';
 
 const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
 
+interface Point {
+  latitude: number;
+  longitude: number;
+  name: string;
+}
+
 interface Route {
   id: number;
   name: string;
-  startPoint: {
-    name: string;
-  };
-  endPoint: {
-    name: string;
-  };
+  startPoint: Point;
+  endPoint: Point;
   distance: number;
+  points: Point[];
 }
 
 const Routes = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [routes, setRoutes] = useState<Route[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchKey") || "");
   const [openDialog, setOpenDialog] = useState(false);
   const [routeToDelete, setRouteToDelete] = useState<number | null>(null);
+  const [selectedRoutes, setSelectedRoutes] = useState<number[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // Set initial page number from search params
   const page = parseInt(searchParams.get("page") || "1", 10);
 
-  const fetchRoutes = async (currentPage: number, search: string) => {
+  // Fetch routes
+  const fetchRoutes = useCallback(async (currentPage: number, search: string) => {
     setIsLoading(true);
     try {
       const searchParam = search ? `&searchKey=${encodeURIComponent(search)}` : '';
@@ -60,24 +66,25 @@ const Routes = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const debouncedFetch = useCallback(
-    debounce((search: string) => {
-      fetchRoutes(page, search);
-    }, 1000),
-    [page]
-  );
 
   useEffect(() => {
-    debouncedFetch(searchTerm);
-    return debouncedFetch.cancel;
-  }, [searchTerm, debouncedFetch, page]);
+    fetchRoutes(page, searchParams.get("searchKey") || "");
+  }, [page, searchParams, fetchRoutes]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchTerm = e.target.value;
-    setSearchTerm(newSearchTerm);
-    router.push(`/routes?page=1&searchKey=${encodeURIComponent(newSearchTerm)}`);
+  // Handle search
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Submit search on button click or Enter key press
+  const handleSearchSubmit = () => {
+    router.push(`/routes?page=1&searchKey=${encodeURIComponent(searchTerm)}`);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSearchSubmit();
   };
 
   const handleDeleteClick = (id: number) => {
@@ -115,10 +122,23 @@ const Routes = () => {
     router.push(`/routes?page=${value}${searchKey}`);
   };
 
+  const handleCheckboxChange = (routeId: number) => {
+    setSelectedRoutes(prev => 
+      prev.includes(routeId)
+        ? prev.filter(id => id !== routeId)
+        : [...prev, routeId]
+    );
+  };
+  
+
   return (
     <Box className="flex">
       <Box className="w-1/2 p-4">
-        {/* <Map moveToCurrentLocation={true} /> */}
+        <Map 
+          moveToCurrentLocation={true} 
+          routes={routes}
+          selectedRoutes={selectedRoutes}
+        />
       </Box>
       <Box className="w-1/2 p-4">
         <Box className="flex justify-between items-center mb-4">
@@ -131,11 +151,15 @@ const Routes = () => {
           <TextField
             variant="outlined"
             placeholder="Search routes..."
-            fullWidth
-            sx={{ borderRadius: '30px' }}
-            onChange={handleSearch}
             value={searchTerm}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyPress}
+            fullWidth
+            sx={{ borderRadius: "30px" }}
           />
+          <Button variant="contained" onClick={handleSearchSubmit} sx={{ ml: 2 }}>
+            Search
+          </Button>
         </Box>
         <Box className="mt-6">
           {isLoading && <Typography>Loading...</Typography>}
@@ -158,7 +182,10 @@ const Routes = () => {
                 {routes.map((route) => (
                   <TableRow key={route.id}>
                     <TableCell padding="checkbox">
-                      <Checkbox />
+                    <Checkbox 
+                      checked={selectedRoutes.includes(route.id)}
+                      onChange={() => handleCheckboxChange(route.id)}
+                    />
                     </TableCell>
                     <TableCell>{route.name}</TableCell>
                     <TableCell>{route.startPoint?.name || 'N/A'}</TableCell>
