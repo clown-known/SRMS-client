@@ -11,6 +11,9 @@ interface MapProps {
   center?: [number, number];
   moveToCurrentLocation?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
+  selectedRoutes?: number[];
+  routes?: Route[];
+  singleRouteMode?: boolean;
 }
 
 interface Point {
@@ -20,18 +23,20 @@ interface Point {
 }
 
 interface Route {
+  id: number;
+  name: string;
   startPoint: Point;
   endPoint: Point;
+  distance: number;
   points: Point[];
-  name: string;
 }
 
-const MapContent = ({ center, moveToCurrentLocation, onMapClick }: MapProps) => {
+const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes, routes, singleRouteMode }: MapProps) => {
   const [redIcon, setRedIcon] = useState<L.Icon | null>(null);
   const [blueIcon, setBlueIcon] = useState<L.Icon | null>(null);
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [points, setPoints] = useState<Point[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
+  const [routingControls, setRoutingControls] = useState<L.Routing.Control[]>([]);
 
   const map = useMap();
 
@@ -66,24 +71,9 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick }: MapProps) => 
     }
   }, []);
 
-  const fetchRoutes = useCallback(async () => {
-    try {
-      const response = await fetch('http://localhost:3002/routes');
-      if (!response.ok) {
-        throw new Error('Failed to fetch routes');
-      }
-      const data = await response.json();
-      console.log('Fetched routes data:', data);
-      setRoutes(data.data.data || []);
-    } catch (error) {
-      console.error('Error fetching routes:', error);
-    }
-  }, []);
-
   useEffect(() => {
     fetchPoints();
-    fetchRoutes();
-  }, [fetchPoints, fetchRoutes]);
+  }, [fetchPoints]);
 
   useEffect(() => {
     if (!map) return;
@@ -142,50 +132,66 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick }: MapProps) => 
   };
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !routes) return;
 
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Routing.Control) {
-        map.removeLayer(layer);
-      }
+    // Clean up previous routing controls
+    routingControls.forEach(control => {
+        if (map && control) {
+            try {
+                map.removeControl(control);
+            } catch (error) {
+                console.error('Error removing control:', error);
+            }
+        }
     });
+    setRoutingControls([]);
+
+    const newControls: L.Routing.Control[] = [];
 
     routes.forEach((route) => {
-      if (route.startPoint && route.endPoint) {
-        const waypoints = [
-          L.latLng(route.startPoint.latitude, route.startPoint.longitude),
-          ...(route.points ? route.points.map(point => L.latLng(point.latitude, point.longitude)) : []),
-          L.latLng(route.endPoint.latitude, route.endPoint.longitude)
-        ];
+        if ((selectedRoutes && selectedRoutes.includes(route.id)) || singleRouteMode) {
+            if (route.startPoint && route.endPoint) {
+                const waypoints = [
+                    L.latLng(route.startPoint.latitude, route.startPoint.longitude),
+                    ...(route.points ? route.points.map(point => L.latLng(point.latitude, point.longitude)) : []),
+                    L.latLng(route.endPoint.latitude, route.endPoint.longitude)
+                ];
 
-        const routingControl = (L.Routing.control as any)({
-          waypoints,
-          router: L.Routing.osrmv1({
-            serviceUrl: 'https://router.project-osrm.org/route/v1',
-            profile: 'driving',
-          }),
-          lineOptions: {
-            styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
-            extendToWaypoints: true,
-            missingRouteTolerance: 100
-          },
-          addWaypoints: false,
-          fitSelectedRoutes: true,
-          showAlternatives: false,
-          createMarker: function() { return null; },
-          routeWhileDragging: false,
-          show: false 
-        }).addTo(map);
-        
+                const routingControl = L.Routing.control({
+                    waypoints,
+                    router: L.Routing.osrmv1({
+                        serviceUrl: 'https://router.project-osrm.org/route/v1',
+                        profile: 'driving',
+                    }),
+                    lineOptions: {
+                        styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
+                        extendToWaypoints: true,
+                        missingRouteTolerance: 100,
+                    },
+                    addWaypoints: false,
+                    fitSelectedRoutes: true,
+                    showAlternatives: false,
+                    routeWhileDragging: false,
+                    show: false,
+                    createMarker: function() { return null; }, 
+                  } as any).addTo(map);
 
-        routingControl.on('routingerror', function(e: any) {
-          console.error('Routing error:', e.error);
-          const straightLine = L.polyline(waypoints, {color: 'red', weight: 3, opacity: 0.5, dashArray: '5, 10'}).addTo(map);
-          straightLine.bindPopup("Approximate route - unable to calculate exact path");
-        });
-      }
+                newControls.push(routingControl);
+            }
+        }
     });
-  }, [routes, map]);
+
+    setRoutingControls(newControls);
+
+    // Zoom to fit all selected routes
+    if (newControls.length > 0) {
+        const bounds = L.latLngBounds(newControls.flatMap(control =>
+            control.getWaypoints().map(wp => wp.latLng)
+        ));
+        map.fitBounds(bounds);
+    }
+
+}, [map, routes, selectedRoutes, singleRouteMode]);
 
   return (
     <>
@@ -230,10 +236,17 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick }: MapProps) => 
   );
 };
 
-const Map = ({ center = [0, 0], moveToCurrentLocation = false, onMapClick }: MapProps) => {
+const Map = ({ center = [0, 0], moveToCurrentLocation = false, onMapClick, selectedRoutes, routes, singleRouteMode }: MapProps) => {
   return (
     <MapContainer center={center} zoom={13} style={{ height: '100vh', width: '100%' }}>
-      <MapContent center={center} moveToCurrentLocation={moveToCurrentLocation} onMapClick={onMapClick} />
+      <MapContent 
+        center={center} 
+        moveToCurrentLocation={moveToCurrentLocation} 
+        onMapClick={onMapClick} 
+        selectedRoutes={selectedRoutes}
+        routes={routes}
+        singleRouteMode={singleRouteMode}
+      />
     </MapContainer>
   );
 };

@@ -10,15 +10,22 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
-const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
+const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
+
+interface Point {
+  latitude: number;
+  longitude: number;
+  name: string;
+}
 
 interface Route {
-  id: string;
+  id: number;
   name: string;
-  description: string;
+  startPoint: Point;
+  endPoint: Point;
   distance: number;
-  startPoint?: { name: string; description: string };
-  endPoint?: { name: string; description: string };
+  points: Point[];
+  description?: string; 
 }
 
 const RouteDetail: React.FC = () => {
@@ -53,7 +60,15 @@ const RouteDetail: React.FC = () => {
   return (
     <Box className="flex">
       <Box className="w-1/2 p-4">
-        <Map moveToCurrentLocation={true} />
+        {route ? (
+          <Map 
+            routes={[route]} 
+            singleRouteMode={true}
+            center={[route.startPoint.latitude, route.startPoint.longitude]}
+          />
+        ) : (
+          <CircularProgress />
+        )}
       </Box>
       <Box className="w-1/2 p-4">
         <Box className="flex items-center mb-6">

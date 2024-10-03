@@ -5,9 +5,9 @@ import dynamic from 'next/dynamic';
 import { Box, Button, Typography, Select, MenuItem, TextareaAutosize, Grid, Snackbar } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
-import CustomInput from '@/app/components/CustomInput';
+import CustomInput from '@/components/CustomInput';
 
-const Map = dynamic(() => import('@/app/components/Map'), { ssr: false });
+const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
 const CreatePoint = () => {
   const router = useRouter();
