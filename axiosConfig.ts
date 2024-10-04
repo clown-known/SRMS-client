@@ -44,29 +44,35 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response) {
-      // Handle error based on the response status
-      if (error.response.status === 401) {
-        originalRequest._retry = true; // Mark the request as retried
-        try {
-          const newAccessToken = await refreshAccessToken();
-          if(newAccessToken) window.location.href = '/login';
-          Cookies.set('token', newAccessToken); // Store the new access token
-          
-          // Update the original request's Authorization header
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = Cookies.get('refreshToken');
+      
+      if (!refreshToken) {
+        // If no refresh token, reject the request
+        return Promise.reject(error);
+      }
+
+      try {
+        const newAccessToken = await refreshAccessToken();
+        if (newAccessToken) {
+          Cookies.set('token', newAccessToken);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          
-          // Retry the original request
           return axiosInstance(originalRequest);
-        } catch (refreshError) {
-          Cookies.remove('refreshToken'); 
-          window.location.href = '/login';
-          return Promise.reject(refreshError);
-        }
-        // window.location.href = '/login'; // Redirect to login page
+        } 
+          // If refreshAccessToken returns null or undefined
+          Cookies.remove('token');
+          Cookies.remove('refreshToken');
+          return Promise.reject(error);
+        
+      } catch (refreshError) {
+        // If refreshAccessToken throws an error (e.g., 401 from refresh endpoint)
+        Cookies.remove('token');
+        Cookies.remove('refreshToken');
+        return Promise.reject(refreshError);
       }
     }
-    return Promise.reject(error); // Forward error to the calling service
+    return Promise.reject(error);
   }
 );
 
