@@ -9,7 +9,7 @@ async function RolesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-center">
-        <h1 className="text-2xl font-bold">Role List</h1>
+        <h1 className="text-2xl font-bold text-white">Role List</h1>
       </div>
       <RolePageContent
         initialRoles={initialRoles}

@@ -16,7 +16,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { useState } from 'react';
-import { EditNotifications } from '@mui/icons-material';
+import { Delete, Edit, EditNotifications } from '@mui/icons-material';
 import PermissionChips from './PermissionChip';
 import EditRoleModal from './EditRoleModal';
 
@@ -78,7 +78,7 @@ export default function RoleTable({
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Permissions</TableCell>
+              <TableCell sx={{ width: '50%' }}>Permissions</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -87,7 +87,7 @@ export default function RoleTable({
               <TableRow key={role.id}>
                 <TableCell>{role.id}</TableCell>
                 <TableCell>{role.name}</TableCell>
-                <TableCell>
+                <TableCell sx={{ width: '50%' }}>
                   <PermissionChips
                     permissions={role.rolePermissions
                       ?.map((rp) => rp.permission)
@@ -96,10 +96,10 @@ export default function RoleTable({
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleEditClick(role)}>
-                    <EditNotifications />
+                    <Edit />
                   </IconButton>
                   <IconButton onClick={() => handleDeleteClick(role.id)}>
-                    delete
+                    <Delete />
                   </IconButton>
                 </TableCell>
               </TableRow>
