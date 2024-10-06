@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Button, TextField, Typography, Pagination, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, } from "@mui/material";
 import AnchorIcon from "@mui/icons-material/Anchor";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+import PaginationCustom from "@/components/Pagination";
+import { pointService } from "@/service/pointService";
 
 // Load the map component
 const Map = dynamic(() => import("@/components/geo/Map"), { ssr: false });
@@ -30,14 +32,11 @@ const Points = () => {
     setIsLoading(true);
     setError("");
     try {
-      const searchParam = searchKey ? `&searchKey=${encodeURIComponent(searchKey)}` : "";
-      const response = await fetch(`http://localhost:3002/points?page=${currentPage}&take=3${searchParam}`);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      const response = await pointService.getAllPoints(currentPage, 3, searchKey);
 
-      const result = await response.json();
-      if (result.data?.data && Array.isArray(result.data.data)) {
-        setPoints(result.data.data);
-        setTotalPages(Math.ceil(result.data.meta.itemCount / 3));
+      if (response.data?.data) {
+        setPoints(response.data.data);
+        setTotalPages(Math.ceil(response.data.meta.itemCount / 3));
       } else {
         throw new Error("Unexpected data structure");
       }
@@ -66,11 +65,6 @@ const Points = () => {
     if (e.key === "Enter") handleSearchSubmit();
   };
 
-  // Handle pagination change
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    const searchKey = searchTerm ? `&searchKey=${encodeURIComponent(searchTerm)}` : "";
-    router.push(`/points?page=${value}${searchKey}`);
-  };
 
   // Delete point
   const handleDelete = async () => {
@@ -86,7 +80,7 @@ const Points = () => {
     }
   };
 
-  // Capitalize first letters
+  // Capitalize first letter
   const capitalizeString = (string: string) => string.charAt(0).toUpperCase() + string.slice(1);
 
   // Open and close dialog delete confirmation
@@ -161,7 +155,11 @@ const Points = () => {
         </Box>
 
         <Box className="mt-4 flex justify-center">
-          <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+        <PaginationCustom 
+            totalPages={totalPages} 
+            currentPage={page} 
+            searchKey={searchTerm} 
+          />
         </Box>
 
         {/* Delete Confirmation Dialog */}

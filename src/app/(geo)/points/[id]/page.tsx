@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Box, Button, Typography, IconButton, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DescriptionIcon from '@mui/icons-material/Description';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import Loading from '@/components/Loading';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -53,7 +54,7 @@ const PointDetail = () => {
   };
 
   if (isLoading) {
-    return <CircularProgress />;
+    return <Loading />;
   }
 
   if (error) {

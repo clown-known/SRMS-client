@@ -1,73 +1,87 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import dynamic from "next/dynamic";
-import { 
-  Box, Button, Typography, TextareaAutosize, Grid, Snackbar,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItemText,
-  ListItemButton
-} from "@mui/material";
-import ListItem from '@mui/material/ListItem';
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useRouter } from "next/navigation";
-import CustomInput from "@/components/CustomInput";
-import { calculateDistance } from "@/app/utils/distanceUtils";
+import React, { useCallback, useState } from 'react';
+import dynamic from 'next/dynamic';
+import {
+  Box,
+  Button,
+  Typography,
+  TextareaAutosize,
+  Grid,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  List,
+  ListItemText,
+  ListItemButton,
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useRouter } from 'next/navigation';
+import CustomInput from '@/components/CustomInput';
+import { calculateDistance } from '@/utils/distanceUtils';
+import SnackbarCustom from '@/components/Snackbar';
+import { calculateTime } from '@/utils/TimeUtils';
+import { debounceFetching } from '@/utils/debounceFetch';
 
-const Map = dynamic(() => import("@/components/geo/Map"), { ssr: false });
-
-interface Point {
-  id: string;
-  name: string;
-  type: string;
-  distance: number;
-  latitude: number;
-  longitude: number;
-}
+const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
 const RouteCreate = () => {
   const router = useRouter();
-  const [description, setDescription] = useState("");
-  const [points, setPoints] = useState<Point[]>([]);
+  const [description, setDescription] = useState('');
+  const [points, setPoints] = useState<PointDTO[]>([]);
+  const [route, setRoute] = useState<RouteDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [startPointId, setStartPointId] = useState<string | null>(null);
   const [endPointId, setEndPointId] = useState<string | null>(null);
-  const [startPointName, setStartPointName] = useState<string>("");
-  const [endPointName, setEndPointName] = useState<string>("");
+  const [startPointName, setStartPointName] = useState<string>('');
+  const [endPointName, setEndPointName] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<"start" | "end">("start");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [routeName, setRouteName] = useState("");
-  const [distance, setDistance] = useState<number | string>("");
+  const [dialogType, setDialogType] = useState<'start' | 'end'>('start');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [routeName, setRouteName] = useState('');
+  const [distance, setDistance] = useState<number | string>('');
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
 
-  const fetchPoints = async (search: string = "") => {
+  const fetchPoints = async (search: string = '') => {
     try {
       setIsLoading(true);
-      const searchParam = search ? `searchKey=${encodeURIComponent(search)}` : '';
-      const response = await fetch(`http://localhost:3002/points?${searchParam}`);
+      const searchParam = search
+        ? `searchKey=${encodeURIComponent(search)}`
+        : '';
+      const response = await fetch(
+        `http://localhost:3002/points?${searchParam}`
+      );
       if (!response.ok) {
-        throw new Error("Fetch Point Error");
+        throw new Error('Fetch Point Error');
       }
       const responseData = await response.json();
-      
-      if (responseData.statusCode === 200 && responseData.data && responseData.data.data) {
+
+      if (
+        responseData.statusCode === 200 &&
+        responseData.data &&
+        responseData.data.data
+      ) {
         setPoints(responseData.data.data);
       } else {
-        throw new Error("Invalid data structure");
+        throw new Error('Invalid data structure');
       }
     } catch (error) {
-      setError("Error fetching points");
+      setError('Error fetching points');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOpenDialog = (type: "start" | "end") => {
+  const handleOpenDialog = (type: 'start' | 'end') => {
     setDialogType(type);
     setDialogOpen(true);
-    setSearchTerm("");
+    setSearchTerm('');
     fetchPoints();
   };
 
@@ -75,46 +89,93 @@ const RouteCreate = () => {
     setDialogOpen(false);
   };
 
+  const debouncedFetchPoints = debounceFetching((search: string) => {
+    fetchPoints(search);
+  }, 2000);
+
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const searchTerm = event.target.value;
     setSearchTerm(searchTerm);
-    fetchPoints(searchTerm);
+    debouncedFetchPoints(searchTerm);
   };
 
-  const handleSelectPoint = (point: Point) => {
-    if (dialogType === "start") {
-      setStartPointId(point.id);
-      setStartPointName(point.name);
-      if (endPointId) {
-        const endPoint = points.find(p => p.id === endPointId);
-        if (endPoint) {
-          const distance = calculateDistance(point.latitude, point.longitude, endPoint.latitude, endPoint.longitude);
-          setDistance(distance.toFixed(2)); 
-        }
+  const updateRouteOnMap = useCallback(
+    (newStartPoint: PointDTO | null, newEndPoint: PointDTO | null) => {
+      if (!route) return;
+
+      const updatedRoute = { ...route };
+      if (newStartPoint) {
+        updatedRoute.startPoint = newStartPoint;
       }
-    } else {
-      setEndPointId(point.id);
-      setEndPointName(point.name);
-      if (startPointId) {
-        const startPoint = points.find(p => p.id === startPointId);
-        if (startPoint) {
-          const distance = calculateDistance(startPoint.latitude, startPoint.longitude, point.latitude, point.longitude);
-          setDistance(distance.toFixed(2));
-        }
+      if (newEndPoint) {
+        updatedRoute.endPoint = newEndPoint;
       }
-    }
-    handleCloseDialog();
-  };
+
+      setRoute(updatedRoute);
+    },
+    [route]
+  );
+
+  const handleSelectPoint = useCallback(
+    (point: PointDTO) => {
+      if (dialogType === 'start') {
+        setStartPointId(point.id);
+        setStartPointName(point.name);
+        if (endPointId) {
+          const endPoint = points.find((p) => p.id === endPointId);
+          if (endPoint) {
+            const distance = calculateDistance(
+              point.latitude,
+              point.longitude,
+              endPoint.latitude,
+              endPoint.longitude
+            );
+            const estimatedTime = calculateTime(distance);
+            setEstimatedTime(estimatedTime);
+            setDistance(distance.toFixed(2));
+          }
+        }
+        updateRouteOnMap(point, null);
+      } else {
+        setEndPointId(point.id);
+        setEndPointName(point.name);
+        if (startPointId) {
+          const startPoint = points.find((p) => p.id === startPointId);
+          if (startPoint) {
+            const distance = calculateDistance(
+              startPoint.latitude,
+              startPoint.longitude,
+              point.latitude,
+              point.longitude
+            );
+            setDistance(distance.toFixed(2));
+            const estimatedTime = calculateTime(distance);
+            setEstimatedTime(estimatedTime);
+          }
+        }
+        updateRouteOnMap(null, point);
+      }
+      handleCloseDialog();
+    },
+    [dialogType, endPointId, points, startPointId, updateRouteOnMap]
+  );
+
+  const TimeDisplay =
+    estimatedTime > 24
+      ? `${Math.round(estimatedTime / 24)} day(s)`
+      : `${estimatedTime.toFixed(2)} hour(s)`;
 
   const handleCreateRoute = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!routeName || !startPointId || !endPointId || !distance) {
-      setSnackbarMessage("Please fill in all fields before creating the route.");
+      setSnackbarMessage(
+        'Please fill in all fields before creating the route.'
+      );
       setSnackbarOpen(true);
       return;
     }
-  
+
     try {
       const routeData = {
         startPointId: startPointId,
@@ -122,42 +183,41 @@ const RouteCreate = () => {
         description,
         name: routeName,
         distance: Math.round(Number(distance)),
+        estimatedTime,
       };
-  
-      console.log("Sending route data:", routeData);
-  
-      const response = await fetch("http://localhost:3002/routes", {
-        method: "POST",
+
+      console.log('Sending route data:', routeData);
+
+      const response = await fetch('http://localhost:3002/routes', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(routeData),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error response:", errorData);
-        throw new Error("Failed to create route: " + errorData.message || "Unknown error");
+        console.error('Error response:', errorData);
+        throw new Error(
+          'Failed to create route: ' + errorData.message || 'Unknown error'
+        );
       }
-  
+
       const data = await response.json();
-      setSnackbarMessage("Route created successfully!");
+      setSnackbarMessage('Route created successfully!');
       setSnackbarOpen(true);
       router.push('/routes');
-  
     } catch (error) {
-      console.error("Error creating route");
-      setSnackbarMessage("Error creating route");
+      console.error('Error creating route');
+      setSnackbarMessage('Error creating route');
       setSnackbarOpen(true);
     }
   };
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
-  }
-  
-  
-  
+  };
 
   if (error) {
     return <Typography color="error">{error}</Typography>;
@@ -168,9 +228,12 @@ const RouteCreate = () => {
       <Box className="w-1/2 p-4">
         <Map moveToCurrentLocation={true} />
       </Box>
-      <Box className="w-1/2 p-8 overflow-y-auto">
-        <Box className="flex items-center mb-6">
-          <Button startIcon={<ArrowBackIcon />} onClick={() => router.push("/routes")}>
+      <Box className="w-1/2 overflow-y-auto p-8">
+        <Box className="mb-6 flex items-center">
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => router.push('/routes')}
+          >
             Back to Routes
           </Button>
         </Box>
@@ -180,93 +243,128 @@ const RouteCreate = () => {
         </Typography>
 
         <form onSubmit={handleCreateRoute}>
-          <CustomInput label="Route Name" value={routeName} onChange={(e) => setRouteName(e.target.value)} />
+          <CustomInput
+            label="Route Name"
+            value={routeName}
+            onChange={(e) => setRouteName(e.target.value)}
+          />
 
           <Grid container spacing={2} className="mb-4">
             <Grid item xs={6}>
-              <Typography variant="subtitle1" className="mb-2">Start Point</Typography>
+              <Typography variant="subtitle1" className="mb-2">
+                Start Point
+              </Typography>
               <TextField
                 fullWidth
                 value={startPointName}
-                onClick={() => handleOpenDialog("start")}
+                onClick={() => handleOpenDialog('start')}
                 InputProps={{ readOnly: true }}
               />
             </Grid>
 
             <Grid item xs={6}>
-              <Typography variant="subtitle1" className="mb-2">End Point</Typography>
+              <Typography variant="subtitle1" className="mb-2">
+                End Point
+              </Typography>
               <TextField
                 fullWidth
-                value={endPointName} 
-                onClick={() => handleOpenDialog("end")}
+                value={endPointName}
+                onClick={() => handleOpenDialog('end')}
                 InputProps={{ readOnly: true }}
               />
             </Grid>
           </Grid>
 
-          <CustomInput label="Distance" type="number" value={distance} onChange={(e) => setDistance(e.target.value)} disabled={true} />
-
-          <Typography variant="subtitle1" className="mb-2">Description</Typography>
+          <CustomInput
+            label="Distance"
+            type="number"
+            value={distance}
+            onChange={(e) => setDistance(e.target.value)}
+            disabled={true}
+          />
+          <CustomInput
+            label="Estimated Time"
+            value={TimeDisplay}
+            disabled={true}
+          />
+          <Typography variant="subtitle1" className="mb-2">
+            Description
+          </Typography>
           <TextareaAutosize
             minRows={3}
             placeholder="Enter description"
-            className="w-full p-2 border rounded mb-4"
+            className="mb-4 w-full rounded border p-2"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
 
-          <Button variant="contained" color="primary" fullWidth type="submit" className="mt-4">
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            type="submit"
+            className="mt-4"
+          >
             Create Route
           </Button>
         </form>
 
-        <Dialog open={dialogOpen} onClose={handleCloseDialog} aria-labelledby="dialog-title">
-        <DialogTitle>{dialogType === "start" ? "Select Start Point" : "Select End Point"}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Search Points"
-            type="text"
-            fullWidth
-            variant="standard"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-          <List>
-            {isLoading && <ListItemButton><ListItemText primary="Loading..." /></ListItemButton>}
-            {error && <ListItemButton><ListItemText primary={error} /></ListItemButton>}
-            {!isLoading && !error && points.length > 0 ? (
-              points.map((point) => (
-                <ListItemButton 
-                  key={point.id} 
-                  onClick={() => handleSelectPoint(point)}
-                >
-                  <ListItemText primary={point.name} />
+        <Dialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          aria-labelledby="dialog-title"
+        >
+          <DialogTitle>
+            {dialogType === 'start' ? 'Select Start Point' : 'Select End Point'}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Search Points"
+              type="text"
+              fullWidth
+              variant="standard"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+            <List>
+              {isLoading && (
+                <ListItemButton>
+                  <ListItemText primary="Loading..." />
                 </ListItemButton>
-              ))
-            ) : (
-              <ListItemButton><ListItemText primary="No points found" /></ListItemButton>
-            )}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+              )}
+              {error && (
+                <ListItemButton>
+                  <ListItemText primary={error} />
+                </ListItemButton>
+              )}
+              {!isLoading && !error && points.length > 0 ? (
+                points.map((point) => (
+                  <ListItemButton
+                    key={point.id}
+                    onClick={() => handleSelectPoint(point)}
+                  >
+                    <ListItemText primary={point.name} />
+                  </ListItemButton>
+                ))
+              ) : (
+                <ListItemButton>
+                  <ListItemText primary="No points found" />
+                </ListItemButton>
+              )}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+          </DialogActions>
+        </Dialog>
 
-      <Snackbar
+        {/* Snackbar for display validation error*/}
+        <SnackbarCustom
           open={snackbarOpen}
-          onClose={handleCloseSnackbar}
           message={snackbarMessage}
-          autoHideDuration={3000} 
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          ContentProps={{
-            style: {
-              backgroundColor: snackbarMessage.includes('successfully') ? '#4caf50' : '#f44336',
-              color: '#fff', 
-            },
-          }}
+          onClose={handleCloseSnackbar}
         />
       </Box>
     </Box>

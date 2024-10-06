@@ -6,6 +6,7 @@ import { Box, Button, Typography, Select, MenuItem, TextareaAutosize, Grid, Snac
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
 import CustomInput from '@/components/CustomInput';
+import SnackbarCustom from '@/components/Snackbar';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -63,7 +64,7 @@ const CreatePoint = () => {
     setLongitude(lng.toString());
   };
 
-  const handleCloseSnackbars = () => {
+  const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   }
 
@@ -141,18 +142,10 @@ const CreatePoint = () => {
         </form>
 
         {/* Snackbar for display validation error*/}
-        <Snackbar
+        <SnackbarCustom
           open={snackbarOpen}
-          onClose={handleCloseSnackbars}
           message={snackbarMessage}
-          autoHideDuration={3000} 
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          ContentProps={{
-            style: {
-              backgroundColor: '#f44336', 
-              color: '#fff', 
-            },
-          }}
+          onClose={handleCloseSnackbar}
         />
       </Box>
     </Box>

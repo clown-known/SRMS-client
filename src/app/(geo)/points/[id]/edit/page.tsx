@@ -7,6 +7,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import CustomInput from '@/components/CustomInput';
+import SnackbarCustom from '@/components/Snackbar';
+import Loading from '@/components/Loading';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -118,7 +120,7 @@ const PointEdit = () => {
   };
   
   if (isLoading) {
-    return <Typography>Loading...</Typography>;
+    return <Loading />;
   }
 
   if (error) {
@@ -198,18 +200,11 @@ const PointEdit = () => {
           </Button>
         </form>
 
-        <Snackbar
+        {/* Snackbar for display validation error*/}
+        <SnackbarCustom
           open={snackbarOpen}
-          onClose={handleCloseSnackbar}
           message={snackbarMessage}
-          autoHideDuration={3000} 
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          ContentProps={{
-            style: {
-              backgroundColor: snackbarMessage.includes('successfully') ? '#4caf50' : '#f44336',
-              color: '#fff', 
-            },
-          }}
+          onClose={handleCloseSnackbar}
         />
       </Box>
     </Box>

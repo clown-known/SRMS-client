@@ -7,34 +7,21 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
 import debounce from 'lodash/debounce';
 import dynamic from 'next/dynamic';
+import PaginationCustom from '@/components/Pagination';
+import Loading from '@/components/Loading';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
-
-interface Point {
-  latitude: number;
-  longitude: number;
-  name: string;
-}
-
-interface Route {
-  id: number;
-  name: string;
-  startPoint: Point;
-  endPoint: Point;
-  distance: number;
-  points: Point[];
-}
 
 const Routes = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [routes, setRoutes] = useState<Route[]>([]);
+  const [routes, setRoutes] = useState<RouteDTO[]>([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("searchKey") || "");
   const [openDialog, setOpenDialog] = useState(false);
-  const [routeToDelete, setRouteToDelete] = useState<number | null>(null);
-  const [selectedRoutes, setSelectedRoutes] = useState<number[]>([]);
+  const [routeToDelete, setRouteToDelete] = useState<string | null>(null);
+  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
   // Set initial page number from search params
@@ -61,7 +48,6 @@ const Routes = () => {
         setError('Unexpected data structure received from server');
       }
     } catch (error) {
-      console.error(error);
       setError('An error occurred while fetching data');
     } finally {
       setIsLoading(false);
@@ -87,7 +73,7 @@ const Routes = () => {
     if (e.key === "Enter") handleSearchSubmit();
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setRouteToDelete(id);
     setOpenDialog(true);
   };
@@ -117,12 +103,7 @@ const Routes = () => {
     setRouteToDelete(null);
   };
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    const searchKey = searchTerm ? `&searchKey=${encodeURIComponent(searchTerm)}` : "";
-    router.push(`/routes?page=${value}${searchKey}`);
-  };
-
-  const handleCheckboxChange = (routeId: number) => {
+  const handleCheckboxChange = (routeId: string) => {
     setSelectedRoutes(prev => 
       prev.includes(routeId)
         ? prev.filter(id => id !== routeId)
@@ -162,7 +143,7 @@ const Routes = () => {
           </Button>
         </Box>
         <Box className="mt-6">
-          {isLoading && <Typography>Loading...</Typography>}
+          {isLoading && <Loading />}
           {!isLoading && error && <Typography color="error">{error}</Typography>}
           {!isLoading && !error && routes.length > 0 && (
             <TableContainer component={Paper}>
@@ -208,15 +189,14 @@ const Routes = () => {
             </TableContainer>
           )}
           {!isLoading && !error && routes.length === 0 && (
-            <Typography>No routes found</Typography>
+            <Typography>Something went wrong! Please refresh the page or change the request!</Typography>
           )}
         </Box>
         <Box className="mt-4 flex justify-center">
-          <Pagination 
-            count={totalPages} 
-            page={page} 
-            onChange={handlePageChange} 
-            color="primary" 
+          <PaginationCustom 
+            totalPages={totalPages} 
+            currentPage={page} 
+            searchKey={searchTerm} 
           />
         </Box>
       </Box>

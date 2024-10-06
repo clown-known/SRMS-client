@@ -2,38 +2,27 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Box, Button, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
+import { calculateTime } from '@/utils/TimeUtils';
+import Loading from '@/components/Loading';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
-interface Point {
-  latitude: number;
-  longitude: number;
-  name: string;
-}
-
-interface Route {
-  id: number;
-  name: string;
-  startPoint: Point;
-  endPoint: Point;
-  distance: number;
-  points: Point[];
-  description?: string; 
-}
 
 const RouteDetail: React.FC = () => {
   const router = useRouter();
   const { id } = useParams(); 
-  const [route, setRoute] = useState<Route | null>(null);
+  const [route, setRoute] = useState<RouteDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
 
   const fetchRouteDetails = async () => {
     try {
@@ -41,7 +30,9 @@ const RouteDetail: React.FC = () => {
       const data = await response.json();
 
       if (data.statusCode === 200) {
-        setRoute(data.data); 
+        setRoute(data.data);
+        const time = calculateTime(data.data.distance); 
+        setEstimatedTime(time);
       } else {
         setError(data.message || 'An error occurred');
       }
@@ -52,6 +43,8 @@ const RouteDetail: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+
 
   useEffect(() => {
     fetchRouteDetails();
@@ -67,7 +60,7 @@ const RouteDetail: React.FC = () => {
             center={[route.startPoint.latitude, route.startPoint.longitude]}
           />
         ) : (
-          <CircularProgress />
+          <Loading />
         )}
       </Box>
       <Box className="w-1/2 p-4">
@@ -90,14 +83,14 @@ const RouteDetail: React.FC = () => {
         </Box>
 
         {isLoading ? (
-          <CircularProgress />
+          <Loading />
         ) : (
           <>
             {error && <Typography color="error">{error}</Typography>}
             <Box className="bg-gray-100 rounded-lg p-4 mb-4 flex justify-between">
               <Box className="mb-4">
                 <Box className="flex items-center">
-                  <AnchorIcon color="primary" className="mr-1" />
+                  <LocationOnIcon color="primary" className="mr-1" />
                   <Box>
                     <Typography variant="body2" className="font-extralight">Start Point:</Typography>
                     <Typography variant="body2" className="font-semibold text-lg">
@@ -108,7 +101,7 @@ const RouteDetail: React.FC = () => {
               </Box>
               <Box className="mb-4">
                 <Box className="flex items-center">
-                  <LocationOnIcon className="mr-1" />
+                  <LocationOnIcon color="error" className="mr-1" />
                   <Box>
                     <Typography variant="body2" className="font-extralight">End Point:</Typography>
                     <Typography variant="body2" className="font-semibold text-lg">
@@ -127,6 +120,21 @@ const RouteDetail: React.FC = () => {
                     <Typography variant="body2" className="font-extralight">Distance:</Typography>
                     <Typography variant="body2" className="font-semibold text-lg">
                       {route ? `${route.distance} km` : 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+              <Box className="mb-4">
+                <Box className="flex items-center">
+                  <AccessTimeIcon color="primary" className="mr-1" />
+                  <Box>
+                    <Typography variant="body2" className="font-extralight">Estimated Time:</Typography>
+                    <Typography variant="body2" className="font-semibold text-lg">
+                      {estimatedTime !== null 
+                      ? estimatedTime > 24 
+                          ? `${Math.round(estimatedTime / 24)} day(s)` 
+                          : `${estimatedTime.toFixed(2)} hour(s)` 
+                      : 'N/A'}
                     </Typography>
                   </Box>
                 </Box>

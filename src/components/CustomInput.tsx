@@ -10,7 +10,7 @@ interface CustomInputProps {
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
   
-const CustomInput: React.FC<CustomInputProps> = ({ label, type = 'text', value, onChange, disabled }) => {
+const CustomInput = ({ label, type = 'text', value, onChange, disabled }: CustomInputProps) => {
   return (
     <TextField variant="outlined" label={label} value={value ? String(value) : ''} onChange={onChange} disabled={disabled} fullWidth className='mb-4'  />
   )
