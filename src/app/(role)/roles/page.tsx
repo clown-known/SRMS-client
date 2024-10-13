@@ -3,7 +3,7 @@ import { getPermission, getRoles } from '@/service/roleService';
 
 async function RolesPage() {
   const rolesData = await getRoles();
-  const initialRoles = rolesData.data.data || [];
+  const initialRoles = rolesData || [];
   const permissionData = await getPermission();
   const initialPermission = permissionData.data.data || [];
   return (
@@ -13,7 +13,7 @@ async function RolesPage() {
       </div>
       <RolePageContent
         initialRoles={initialRoles}
-        initialPermission={initialPermission}
+        initialPermissions={initialPermission}
       />
     </div>
   );

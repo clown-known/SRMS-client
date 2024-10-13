@@ -14,19 +14,58 @@ import {
   DialogActions,
   Button,
   IconButton,
+  styled,
+  Tooltip,
 } from '@mui/material';
 import { useState } from 'react';
 import { Delete, Edit } from '@mui/icons-material';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import EditAccountModal from './EditAccountModal';
+import ResetPasswordModal from './ResetPasswordModal';
+import DeleteAccountModal from './DeleteAccountModal';
+
+const fontStack = `ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;
+
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  fontFamily: fontStack,
+  fontSize: '16px',
+}));
+
+const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
+  '&.MuiTableCell-head': {
+    fontWeight: 'bold',
+    fontFamily: fontStack,
+    fontSize: '17px',
+  },
+  fontFamily: fontStack,
+  fontSize: '17px',
+}));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  '&.MuiTableCell-head': {
+    fontFamily: fontStack,
+    fontSize: '16px',
+  },
+  fontFamily: fontStack,
+  fontSize: '16px',
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
 
 interface AccountTableProps {
   accounts: AccountDTO[];
   roles: RoleDTO[];
   onDeleteAccount: (id: string) => void;
+  onResetPassword: (id: string) => void;
   onUpdateAccount: (
     id: string,
     data: { email: string; roleId: string; profile: Partial<ProfileDTO> }
   ) => void;
+  userPermissions: string[];
 }
 
 export default function AccountTable({
@@ -34,22 +73,39 @@ export default function AccountTable({
   roles,
   onDeleteAccount,
   onUpdateAccount,
+  onResetPassword,
+  userPermissions,
 }: AccountTableProps) {
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteAccount, setDeleteAccount] = useState<AccountDTO | null>(null);
+  const [resetPasswordAccount, setResetPasswordAccount] =
+    useState<AccountDTO | null>(null);
+
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [accountToEdit, setAccountToEdit] = useState<AccountDTO | null>(null);
 
-  const handleDeleteClick = (id: string) => {
-    setAccountToDelete(id);
-    setDeleteConfirmOpen(true);
+  const hasPermission = (permission: string) => {
+    return userPermissions.includes(permission);
+  };
+
+  const handleResetPasswordClick = (account: AccountDTO) => {
+    setResetPasswordAccount(account);
+  };
+
+  const handleResetPasswordConfirm = () => {
+    if (resetPasswordAccount) {
+      onResetPassword(resetPasswordAccount.id);
+      setResetPasswordAccount(null);
+    }
+  };
+  const handleDeleteClick = (account: AccountDTO) => {
+    setDeleteAccount(account);
   };
 
   const handleDeleteConfirm = () => {
-    if (accountToDelete) {
-      onDeleteAccount(accountToDelete);
-      setDeleteConfirmOpen(false);
-      setAccountToDelete(null);
+    if (deleteAccount) {
+      onDeleteAccount(deleteAccount.id);
+      setDeleteAccount(null);
     }
   };
 
@@ -76,56 +132,69 @@ export default function AccountTable({
 
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="account table">
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Full Name</TableCell>
-              <TableCell>Phone Number</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {accounts?.map((account) => (
-              <TableRow key={account.id}>
-                <TableCell>{account.id}</TableCell>
-                <TableCell>{account.email}</TableCell>
-                <TableCell>{account.profile?.fullName}</TableCell>
-                <TableCell>{account.profile?.phoneNumber}</TableCell>
-                <TableCell>{account.role?.name}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEditClick(account)}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteClick(account.id)}>
-                    <Delete />
-                  </IconButton>
-                </TableCell>
+      <StyledTableContainer>
+        <Paper>
+          <Table stickyHeader sx={{ minWidth: 650 }} aria-label="account table">
+            <TableHead>
+              <TableRow>
+                <StyledTableHeadCell>ID</StyledTableHeadCell>
+                <StyledTableHeadCell>Email</StyledTableHeadCell>
+                <StyledTableHeadCell>Full Name</StyledTableHeadCell>
+                <StyledTableHeadCell>Phone Number</StyledTableHeadCell>
+                <StyledTableHeadCell>Role</StyledTableHeadCell>
+                <StyledTableHeadCell>Actions</StyledTableHeadCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {accounts?.map((account, index) => (
+                <StyledTableRow key={account.id}>
+                  <StyledTableCell>{index + 1}</StyledTableCell>
+                  <StyledTableCell>{account.email}</StyledTableCell>
+                  <StyledTableCell>{account.profile?.fullName}</StyledTableCell>
+                  <StyledTableCell>
+                    {account.profile?.phoneNumber}
+                  </StyledTableCell>
+                  <StyledTableCell>{account.role?.name}</StyledTableCell>
+                  <StyledTableCell>
+                    {hasPermission('account:update') && (
+                      <Tooltip title="Edit">
+                        <IconButton onClick={() => handleEditClick(account)}>
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {hasPermission('account:reset-password') && (
+                      <Tooltip title="Reset Password">
+                        <IconButton
+                          onClick={() => handleResetPasswordClick(account)}
+                        >
+                          <LockResetIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {hasPermission('account:delete') && (
+                      <Tooltip title="Delete">
+                        <IconButton onClick={() => handleDeleteClick(account)}>
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </StyledTableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      </StyledTableContainer>
 
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-      >
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this account?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
+      {resetPasswordAccount && (
+        <ResetPasswordModal
+          open={!!resetPasswordAccount}
+          onClose={() => setResetPasswordAccount(null)}
+          onConfirm={handleResetPasswordConfirm}
+          email={resetPasswordAccount.email}
+        />
+      )}
       {accountToEdit && (
         <EditAccountModal
           open={editModalOpen}
@@ -133,6 +202,14 @@ export default function AccountTable({
           onSubmit={handleEditSubmit}
           account={accountToEdit}
           roles={roles}
+        />
+      )}
+      {deleteAccount && (
+        <DeleteAccountModal
+          open={!!deleteAccount}
+          onClose={() => setDeleteAccount(null)}
+          onConfirm={handleDeleteConfirm}
+          email={deleteAccount.email}
         />
       )}
     </>

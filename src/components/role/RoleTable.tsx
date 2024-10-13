@@ -14,11 +14,45 @@ import {
   DialogActions,
   Button,
   IconButton,
+  styled,
+  Tooltip,
 } from '@mui/material';
 import { useState } from 'react';
 import { Delete, Edit, EditNotifications } from '@mui/icons-material';
 import PermissionChips from './PermissionChip';
 import EditRoleModal from './EditRoleModal';
+
+const fontStack = `ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;
+
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  fontFamily: fontStack,
+  fontSize: '16px',
+}));
+
+const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
+  '&.MuiTableCell-head': {
+    fontWeight: 'bold',
+    fontFamily: fontStack,
+    fontSize: '17px',
+  },
+  fontFamily: fontStack,
+  fontSize: '17px',
+}));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  '&.MuiTableCell-head': {
+    fontFamily: fontStack,
+    fontSize: '16px',
+  },
+  fontFamily: fontStack,
+  fontSize: '16px',
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
 
 interface RoleTableProps {
   roles: RoleDTO[];
@@ -28,6 +62,7 @@ interface RoleTableProps {
     id: string,
     data: { name: string; permissions: string[] }
   ) => void;
+  userPermissions: string[];
 }
 
 export default function RoleTable({
@@ -35,12 +70,17 @@ export default function RoleTable({
   permissions,
   onDeleteRole,
   onUpdateRole,
+  userPermissions,
 }: RoleTableProps) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [roleToEdit, setRoleToEdit] = useState<RoleDTO | null>(null);
 
+  const hasPermission = (permission: string) => {
+    if (userPermissions?.length === 0) return false;
+    return userPermissions?.includes(permission);
+  };
   const handleDeleteClick = (id: string) => {
     setRoleToDelete(id);
     setDeleteConfirmOpen(true);
@@ -72,41 +112,53 @@ export default function RoleTable({
   };
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="role table">
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell sx={{ width: '50%' }}>Permissions</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {roles.map((role) => (
-              <TableRow key={role.id}>
-                <TableCell>{role.id}</TableCell>
-                <TableCell>{role.name}</TableCell>
-                <TableCell sx={{ width: '50%' }}>
-                  <PermissionChips
-                    permissions={role.rolePermissions
-                      ?.map((rp) => rp.permission)
-                      .filter((p): p is PermissionDTO => !!p)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEditClick(role)}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteClick(role.id)}>
-                    <Delete />
-                  </IconButton>
-                </TableCell>
+      <StyledTableContainer>
+        <Paper>
+          <Table sx={{ minWidth: 650 }} aria-label="role table">
+            <TableHead>
+              <TableRow>
+                <StyledTableHeadCell>Index</StyledTableHeadCell>
+                <StyledTableHeadCell>Name</StyledTableHeadCell>
+                <StyledTableHeadCell sx={{ width: '50%' }}>
+                  Permissions
+                </StyledTableHeadCell>
+                <StyledTableHeadCell>Actions</StyledTableHeadCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {roles?.map((role, index) => (
+                <StyledTableRow key={role.id}>
+                  <StyledTableCell>{index + 1}</StyledTableCell>
+                  <StyledTableCell>{role.name}</StyledTableCell>
+                  <StyledTableCell sx={{ width: '50%' }}>
+                    <PermissionChips
+                      permissions={role.rolePermissions
+                        ?.map((rp) => rp.permission)
+                        .filter((p): p is PermissionDTO => !!p)}
+                    />
+                  </StyledTableCell>
+                  <StyledTableCell>
+                    {hasPermission('role:update') && (
+                      <Tooltip title="Edit">
+                        <IconButton onClick={() => handleEditClick(role)}>
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {hasPermission('role:delete') && (
+                      <Tooltip title="Delete">
+                        <IconButton onClick={() => handleDeleteClick(role.id)}>
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </StyledTableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      </StyledTableContainer>
 
       <Dialog
         open={deleteConfirmOpen}

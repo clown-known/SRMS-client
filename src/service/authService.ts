@@ -91,9 +91,9 @@ export const confirmCode = async (data: ConfirmCodeRequest) => {
   Cookies.remove('token');
   await Cookies.set('token', response.data.data.accessToken,cookieOptions);
 }
-export const resetPassword = async (data: ResetPasswordRequest) => {
+export const resetPassword = async (id: string) => {
   try {
-    const response = await axiosInstance.post<ResetPasswordResponse>('authentication-service/auth/reset-password',data);
+    const response = await axiosInstance.put<ResetPasswordResponse>(`authentication-service/auth/reset-password/${id}`);
     return response.data
   } catch (error) {
     return false;
