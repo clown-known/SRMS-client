@@ -27,7 +27,7 @@ const Routes = () => {
   const [openRoutesDialog, setOpenRoutesDialog] = useState(false);
 
   // Set initial page number from search params
-  const page = parseInt(searchParams.get('page') || '1', 10);
+  const page = parseInt(searchParams.get("page") || "1", 10);
 
   // Fetch routes
   const fetchRoutes = useCallback(
@@ -108,10 +108,11 @@ const Routes = () => {
   const handleCheckboxChange = (routeId: string) => {
     setSelectedRoutes((prev) =>
       prev.includes(routeId)
-        ? prev.filter((id) => id !== routeId)
+        ? prev.filter(id => id !== routeId)
         : [...prev, routeId]
     );
   };
+  
 
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>

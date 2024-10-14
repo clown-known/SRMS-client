@@ -1,9 +1,6 @@
-'use client';
-
-import useSWR from 'swr';
-import axiosInstance from '../../../../axiosConfig';
-import Loading from '@/components/Loading';
-import AccountTable from '@/components/account/AccountTable';
+import { getRoles } from '@/service/roleService';
+import AccountPageContent from '@/components/account/AccountPageContent';
+import { getAccounts } from '@/service/accountService';
 
 interface AccounstResponse {
   data: {
@@ -18,25 +15,25 @@ interface AccounstResponse {
     };
   };
 }
-export default function AccountsPage() {
-  const fetcher = (url: string) => axiosInstance.get<AccounstResponse>(url);
 
-  const { data, isLoading, isValidating } = useSWR(
-    'authentication-service/account',
-    fetcher,
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
-  );
-  if (isLoading) return <Loading />;
-  if (isValidating) return <Loading />;
-  //   console.log(data);
+// eslint-disable-next-line @next/next/no-async-client-component
+async function AccountsPage() {
+  const accountsData = await getAccounts();
+  const initialAccounts = accountsData || [];
+  const rolesData = await getRoles();
+  const initialRoles = rolesData.data.data || [];
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Account List</h1>
-      <AccountTable accounts={data?.data.data.data || []} />
+      <div className="mb-6 flex items-center justify-center">
+        <h1 className="text-2xl font-bold text-white">Account List</h1>
+      </div>
+      <AccountPageContent
+        initialAccounts={initialAccounts}
+        initialRoles={initialRoles}
+      />
     </div>
   );
 }
+
+export default AccountsPage;

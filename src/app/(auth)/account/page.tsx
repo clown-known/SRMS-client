@@ -1,14 +1,18 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import useSWR from 'swr';
 import axiosInstance from '../../../../axiosConfig';
+import Loading from '@/components/Loading';
+import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
 
 interface AccountDTOResponse {
   data: AccountDTO;
 }
 
-const Account = () => {
+const Account: FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const fetcher = (url: string) => axiosInstance.get<AccountDTOResponse>(url);
 
   const { data, isLoading, isValidating } = useSWR(
@@ -22,9 +26,29 @@ const Account = () => {
   );
 
   const handleChangePassword = () => {
-    // Implement password change logic here
-    console.log('Change password clicked');
+    setIsModalOpen(true);
   };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSubmitPasswordChange = (
+    oldPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => {
+    // Implement password change logic here
+    console.log('Password change submitted', {
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    });
+    // Close modal after submission
+    setIsModalOpen(false);
+  };
+
+  if (isLoading || isValidating) return <Loading />;
 
   return (
     <div className="bg-gray-1000 flex min-h-screen items-center justify-center">
@@ -52,6 +76,12 @@ const Account = () => {
           Change Password
         </button>
       </div>
+
+      <ChangePasswordModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitPasswordChange}
+      />
     </div>
   );
 };

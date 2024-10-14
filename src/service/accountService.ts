@@ -1,11 +1,98 @@
 import axiosInstance from "../../axiosConfig";
 
-interface AccounstResponse{
-    data:AccountDTO
+export interface AccountsPage{
+  data: AccountDTO[];
+      meta: {
+        page: number;
+        take: number;
+        itemCount: number;
+        pageCount: number;
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+      };
 }
-export const getAccounts = async (): Promise<AccountDTO> => {
-    const response = await axiosInstance.get<AccounstResponse>('authentication-service/auth/register');
-        // Save token to localStorage or any other secure place
-        
+interface AccountsResponse {
+    data: {
+      data: AccountDTO[];
+      meta: {
+        page: number;
+        take: number;
+        itemCount: number;
+        pageCount: number;
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+      };
+    };
+}
+interface AccountResponse {
+  data: {
+    data: AccountDTO;
+  };
+}
+interface AccountRe {
+    email?: string
+    password?: string
+    roleId?: string;
+    profile?: Partial<ProfileDTO>;
+}
+export interface CreateAccountRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  roleId: string;
+}
+interface ResetPasswordResponse{
+  data: boolean
+}
+export const getAccounts = async (page: number = 1, take: number = 10): Promise<AccountsPage> => {
+  const response = await axiosInstance.get<AccountsResponse>(`authentication-service/account?page=${page}&take=${take}`);
+  return response.data.data;
+}
+
+export const deleteAccount = async (id: string) => {
+  try {
+    const response = await axiosInstance.delete(`authentication-service/account/${id}`);
+  return response.data;
+  } catch (error) {
+    return false;
+  }
+  
+}
+
+export const updateAccount = async (id : string, data : AccountRe) => {
+  
+}
+
+export const mapToCreateAccountRequest = (data: any): AccountRe => {
+    // Implement the mapping logic here
+    return {};
+};
+export const searchAccounts = async (searchTerm: string, page: number = 1, take: number = 10): Promise<AccountsPage> => {
+  try {
+    const response = await axiosInstance.get<AccountsResponse>(
+      `authentication-service/account?searchKey=${encodeURIComponent(searchTerm.trim())}&page=${page}&take=${take}`
+    );
     return response.data.data;
+  } catch (error) {
+    console.error('Error searching accounts:', error);
+    throw error;
+  }
+}
+export const CreateAccount = async (data : CreateAccountRequest) => {
+  try {
+    const response = await axiosInstance.post<AccountResponse>('authentication-service/account',data);
+    return response.data
+  } catch (error) {
+    return false;
+  }
+}
+export const resetPassword = async (id: string) => {
+  try {
+    const response = await axiosInstance.put<ResetPasswordResponse>(`authentication-service/account/reset-password/${id}`);
+    return response.data
+  } catch (error) {
+    return false;
+  }
+  
 }

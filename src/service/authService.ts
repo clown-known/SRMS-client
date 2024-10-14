@@ -59,7 +59,6 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   
   try {
     const response = await axiosInstance.post<LoginResponse>('authentication-service/auth/login', data);
-    console.log(response)
       // Save token to localStorage or any other secure place
     Cookies.set('token', response.data.data.token.accessToken, cookieOptions);
 
@@ -92,9 +91,9 @@ export const confirmCode = async (data: ConfirmCodeRequest) => {
   Cookies.remove('token');
   await Cookies.set('token', response.data.data.accessToken,cookieOptions);
 }
-export const resetPassword = async (data: ResetPasswordRequest) => {
+export const resetPassword = async (id: string) => {
   try {
-    const response = await axiosInstance.post<ResetPasswordResponse>('authentication-service/auth/reset-password',data);
+    const response = await axiosInstance.put<ResetPasswordResponse>(`authentication-service/auth/reset-password/${id}`);
     return response.data
   } catch (error) {
     return false;
@@ -129,7 +128,10 @@ export const UpdateMyProfile = async (data:UpdateProfileRequest) => {
     console.error('Error updating profile:', error);
     // Handle the error, e.g., show an error message to the user
   }
-
-  // const response = await axiosInstance.get<ProfileDTO>('authentication-service/auth/my-profile');
-  // return data.data
 }
+export const Logout = async () =>{
+  const response = await axiosInstance.get('authentication-service/auth/logout');
+  Cookies.remove('token');
+  Cookies.remove('refreshToken');
+}
+
