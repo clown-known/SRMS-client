@@ -1,15 +1,21 @@
 interface RouteDTO {
-    id: string;
+  id: string;
 
-    name: string;
+  name: string;
 
-    description: string;
+  description: string;
 
-    startPoint: PointDTO;
+  startPoint: PointDTO;
 
-    endPoint: PointDTO;
+  endPoint: PointDTO;
 
-    distance: number;
+  distance: number;
 
-    points: PointDTO[];
+  estimatedTime: number;
+
+  startPointId?: string;
+
+  endPointId?: string;
+
+  points?: PointDTO[];
 }

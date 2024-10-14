@@ -3,16 +3,15 @@ import React from 'react'
 
 interface CustomInputProps {
   label: string;
-  type?: string;
   value?: string | number;
-  placeholder?: string;
+  // placeholder?: string;
   disabled?: boolean;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
   
-const CustomInput = ({ label, type = 'text', value, onChange, disabled }: CustomInputProps) => {
+const CustomInput = ({ label, value, onChange, disabled }: CustomInputProps) => {
   return (
-    <TextField variant="outlined" label={label} value={value ? String(value) : ''} onChange={onChange} disabled={disabled} fullWidth className='mb-4'  />
+    <TextField variant="standard" label={label} value={value ? String(value) : ''} onChange={onChange} disabled={disabled} fullWidth className='mb-4'  />
   )
 }
 

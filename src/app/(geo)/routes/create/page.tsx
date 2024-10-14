@@ -17,6 +17,7 @@ import {
   List,
   ListItemText,
   ListItemButton,
+  IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,13 @@ import { calculateDistance } from '@/utils/distanceUtils';
 import SnackbarCustom from '@/components/Snackbar';
 import { calculateTime } from '@/utils/TimeUtils';
 import { debounceFetching } from '@/utils/debounceFetch';
+import Loading from '@/components/Loading';
+import MenuIcon from '@mui/icons-material/Menu';
+import CustomDrawer from '@/components/Drawer';
+import PointSelectionDialog from '@/components/route/PointSelection';
+import RouteForm from '@/components/route/RouteForm';
+import { pointService } from '@/service/pointService';
+import { CreateRouteDTO, routeService } from '@/service/routeService';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -47,32 +55,22 @@ const RouteCreate = () => {
   const [routeName, setRouteName] = useState('');
   const [distance, setDistance] = useState<number | string>('');
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
+  const [openDrawer, setOpenDrawer] = useState(false);
 
   const fetchPoints = async (search: string = '') => {
     try {
       setIsLoading(true);
-      const searchParam = search
-        ? `searchKey=${encodeURIComponent(search)}`
-        : '';
-      const response = await fetch(
-        `http://localhost:3002/points?${searchParam}`
-      );
-      if (!response.ok) {
-        throw new Error('Fetch Point Error');
-      }
-      const responseData = await response.json();
+      const response = await pointService.getAllPoints(1, 10, search);
 
-      if (
-        responseData.statusCode === 200 &&
-        responseData.data &&
-        responseData.data.data
-      ) {
-        setPoints(responseData.data.data);
+      if (response.data && response.data.data) {
+        setPoints(response.data.data);
       } else {
         throw new Error('Invalid data structure');
       }
     } catch (error) {
-      setError('Error fetching points');
+      console.error('Error fetching points:', error);
+      setSnackbarMessage('Error fetching points');
+      setSnackbarOpen(true);
     } finally {
       setIsLoading(false);
     }
@@ -119,8 +117,9 @@ const RouteCreate = () => {
   const handleSelectPoint = useCallback(
     (point: PointDTO) => {
       if (dialogType === 'start') {
-        setStartPointId(point.id);
-        setStartPointName(point.name);
+        setStartPointId(point.id); // Lưu ID của điểm bắt đầu
+        setStartPointName(point.name); // Lưu tên của điểm bắt đầu
+        // Tính toán khoảng cách và thời gian nếu đã có điểm kết thúc
         if (endPointId) {
           const endPoint = points.find((p) => p.id === endPointId);
           if (endPoint) {
@@ -159,11 +158,7 @@ const RouteCreate = () => {
     },
     [dialogType, endPointId, points, startPointId, updateRouteOnMap]
   );
-
-  const TimeDisplay =
-    estimatedTime > 24
-      ? `${Math.round(estimatedTime / 24)} day(s)`
-      : `${estimatedTime.toFixed(2)} hour(s)`;
+  
 
   const handleCreateRoute = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -177,44 +172,26 @@ const RouteCreate = () => {
     }
 
     try {
-      const routeData = {
+      const routeData: CreateRouteDTO = {
+        name: routeName,
+        description,
         startPointId: startPointId,
         endPointId: endPointId,
-        description,
-        name: routeName,
-        distance: Math.round(Number(distance)),
+        distance: Number(distance),
         estimatedTime,
       };
 
-      console.log('Sending route data:', routeData);
+      const createdRoute = await routeService.createRoute(routeData);
 
-      const response = await fetch('http://localhost:3002/routes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(routeData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error response:', errorData);
-        throw new Error(
-          'Failed to create route: ' + errorData.message || 'Unknown error'
-        );
-      }
-
-      const data = await response.json();
+      setRoute(createdRoute);
       setSnackbarMessage('Route created successfully!');
       setSnackbarOpen(true);
       router.push('/routes');
     } catch (error) {
-      console.error('Error creating route');
-      setSnackbarMessage('Error creating route');
+      setSnackbarMessage(`Error creating route`);
       setSnackbarOpen(true);
     }
   };
-
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
@@ -224,149 +201,74 @@ const RouteCreate = () => {
   }
 
   return (
-    <Box className="flex h-screen">
-      <Box className="w-1/2 p-4">
-        <Map moveToCurrentLocation={true} />
+    <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
+      <Box sx={{ flex: 1 }}>
+        <Map singleRouteMode={true} />
       </Box>
-      <Box className="w-1/2 overflow-y-auto p-8">
-        <Box className="mb-6 flex items-center">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/routes')}
-          >
-            Back to Routes
-          </Button>
-        </Box>
+      <IconButton
+        onClick={() => setOpenDrawer(true)}
+        sx={{
+          position: 'absolute',
+          top: 150,
+          left: 9,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          border: '1px solid black',
+          width: 35,
+          height: 35,
+        }}
+      >
+        <MenuIcon />
+      </IconButton>
+      <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
+        <Box>
+          <Box className="mb-6 flex items-center">
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => router.push('/routes')}
+            >
+              Back to Routes
+            </Button>
+          </Box>
 
-        <Typography variant="h4" component="h1" className="mb-6">
-          Create Route
-        </Typography>
-
-        <form onSubmit={handleCreateRoute}>
-          <CustomInput
-            label="Route Name"
-            value={routeName}
-            onChange={(e) => setRouteName(e.target.value)}
-          />
-
-          <Grid container spacing={2} className="mb-4">
-            <Grid item xs={6}>
-              <Typography variant="subtitle1" className="mb-2">
-                Start Point
-              </Typography>
-              <TextField
-                fullWidth
-                value={startPointName}
-                onClick={() => handleOpenDialog('start')}
-                InputProps={{ readOnly: true }}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-              <Typography variant="subtitle1" className="mb-2">
-                End Point
-              </Typography>
-              <TextField
-                fullWidth
-                value={endPointName}
-                onClick={() => handleOpenDialog('end')}
-                InputProps={{ readOnly: true }}
-              />
-            </Grid>
-          </Grid>
-
-          <CustomInput
-            label="Distance"
-            type="number"
-            value={distance}
-            onChange={(e) => setDistance(e.target.value)}
-            disabled={true}
-          />
-          <CustomInput
-            label="Estimated Time"
-            value={TimeDisplay}
-            disabled={true}
-          />
-          <Typography variant="subtitle1" className="mb-2">
-            Description
-          </Typography>
-          <TextareaAutosize
-            minRows={3}
-            placeholder="Enter description"
-            className="mb-4 w-full rounded border p-2"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            type="submit"
-            className="mt-4"
-          >
+          <Typography variant="h4" component="h1" className="mb-6">
             Create Route
-          </Button>
-        </form>
+          </Typography>
 
-        <Dialog
-          open={dialogOpen}
-          onClose={handleCloseDialog}
-          aria-labelledby="dialog-title"
-        >
-          <DialogTitle>
-            {dialogType === 'start' ? 'Select Start Point' : 'Select End Point'}
-          </DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Search Points"
-              type="text"
-              fullWidth
-              variant="standard"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-            <List>
-              {isLoading && (
-                <ListItemButton>
-                  <ListItemText primary="Loading..." />
-                </ListItemButton>
-              )}
-              {error && (
-                <ListItemButton>
-                  <ListItemText primary={error} />
-                </ListItemButton>
-              )}
-              {!isLoading && !error && points.length > 0 ? (
-                points.map((point) => (
-                  <ListItemButton
-                    key={point.id}
-                    onClick={() => handleSelectPoint(point)}
-                  >
-                    <ListItemText primary={point.name} />
-                  </ListItemButton>
-                ))
-              ) : (
-                <ListItemButton>
-                  <ListItemText primary="No points found" />
-                </ListItemButton>
-              )}
-            </List>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-          </DialogActions>
-        </Dialog>
+          <RouteForm
+            routeName={routeName}
+            setRouteName={setRouteName}
+            startPointName={startPointName}
+            endPointName={endPointName}
+            handleOpenDialog={handleOpenDialog}
+            distance={distance}
+            estimatedTime={estimatedTime}
+            description={description}
+            setDescription={setDescription}
+            handleSubmit={handleCreateRoute}
+            submitButtonText="Create Route"
+          />
 
-        {/* Snackbar for display validation error*/}
-        <SnackbarCustom
-          open={snackbarOpen}
-          message={snackbarMessage}
-          onClose={handleCloseSnackbar}
-        />
-      </Box>
+          <PointSelectionDialog
+            open={dialogOpen}
+            onClose={handleCloseDialog}
+            dialogType={dialogType}
+            searchTerm={searchTerm}
+            handleSearch={handleSearch}
+            isLoading={isLoading}
+            error={error}
+            points={points}
+            handleSelectPoint={handleSelectPoint}
+          />
+
+          {/* Snackbar for display validation error*/}
+          <SnackbarCustom
+            open={snackbarOpen}
+            message={snackbarMessage}
+            onClose={handleCloseSnackbar}
+          />
+        </Box>
+      </CustomDrawer>
     </Box>
   );
 };

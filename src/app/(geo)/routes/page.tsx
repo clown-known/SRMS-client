@@ -1,14 +1,13 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Box, Button, Checkbox, IconButton, TextField, Typography, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import DeleteIcon from '@mui/icons-material/Delete';
-import debounce from 'lodash/debounce';
 import dynamic from 'next/dynamic';
-import PaginationCustom from '@/components/Pagination';
-import Loading from '@/components/Loading';
+import MenuIcon from '@mui/icons-material/Menu';
+import { routeService } from '@/service/routeService';
+import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
+import RoutesDialog from '@/components/route/MenuDialog';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -18,45 +17,51 @@ const Routes = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [routes, setRoutes] = useState<RouteDTO[]>([]);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("searchKey") || "");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get('searchKey') || ''
+  );
   const [openDialog, setOpenDialog] = useState(false);
   const [routeToDelete, setRouteToDelete] = useState<string | null>(null);
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [openRoutesDialog, setOpenRoutesDialog] = useState(false);
 
   // Set initial page number from search params
-  const page = parseInt(searchParams.get("page") || "1", 10);
+  const page = parseInt(searchParams.get('page') || '1', 10);
 
   // Fetch routes
-  const fetchRoutes = useCallback(async (currentPage: number, search: string) => {
-    setIsLoading(true);
-    try {
-      const searchParam = search ? `&searchKey=${encodeURIComponent(search)}` : '';
-      const response = await fetch(`http://localhost:3002/routes?page=${currentPage}&take=5${searchParam}`);
-      if (!response.ok) {
-        throw new Error('Fetch failed');
+  const fetchRoutes = useCallback(
+    async (currentPage: number, search: string) => {
+      setIsLoading(true);
+      try {
+        const response = await routeService.getAllRoutes(
+          currentPage,
+          10,
+          search
+        );
+        const { data } = response;
+
+        if (data.data && Array.isArray(data.data)) {
+          setRoutes(data.data);
+          setTotalPages(Math.ceil(data.meta.itemCount / 10));
+        } else {
+          setError('Unexpected data structure received from server');
+        }
+      } catch (error) {
+        console.error(error);
+        setError('An error occurred while fetching routes');
+      } finally {
+        setIsLoading(false);
       }
-
-      const responseData = await response.json();
-      console.log(responseData);
-
-      if (responseData && responseData.data && Array.isArray(responseData.data.data)) {
-        setRoutes(responseData.data.data);
-        setTotalPages(Math.ceil(responseData.data.meta.itemCount / 5));
-      } else {
-        console.error('Unexpected data structure:', responseData);
-        setError('Unexpected data structure received from server');
-      }
-    } catch (error) {
-      setError('An error occurred while fetching data');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchRoutes(page, searchParams.get("searchKey") || "");
+    fetchRoutes(page, searchParams.get('searchKey') || '');
+    if (searchParams.get('searchKey') || searchParams.get('page')) {
+      setOpenRoutesDialog(true);
+    }
   }, [page, searchParams, fetchRoutes]);
 
   // Handle search
@@ -70,7 +75,7 @@ const Routes = () => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSearchSubmit();
+    if (e.key === 'Enter') handleSearchSubmit();
   };
 
   const handleDeleteClick = (id: string) => {
@@ -79,13 +84,10 @@ const Routes = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (routeToDelete !== null) {
+    if (routeToDelete) {
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost:3002/routes/${routeToDelete}`, { method: 'DELETE' });
-        if (!response.ok) {
-          throw new Error('Delete failed');
-        }
+        await routeService.deleteRoute(routeToDelete);
         fetchRoutes(page, searchTerm);
       } catch (error) {
         console.error(error);
@@ -104,119 +106,65 @@ const Routes = () => {
   };
 
   const handleCheckboxChange = (routeId: string) => {
-    setSelectedRoutes(prev => 
+    setSelectedRoutes((prev) =>
       prev.includes(routeId)
-        ? prev.filter(id => id !== routeId)
+        ? prev.filter((id) => id !== routeId)
         : [...prev, routeId]
     );
   };
-  
 
   return (
-    <Box className="flex">
-      <Box className="w-1/2 p-4">
-        <Map 
-          moveToCurrentLocation={true} 
+    <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
+      <Box sx={{ flex: 1 }}>
+        <Map
+          moveToCurrentLocation={true}
           routes={routes}
           selectedRoutes={selectedRoutes}
         />
       </Box>
-      <Box className="w-1/2 p-4">
-        <Box className="flex justify-between items-center mb-4">
-          <Typography variant="h4">Shipping Routes</Typography>
-          <Button variant="contained" sx={{ backgroundColor: 'black', color: 'white' }} onClick={() => router.push('/routes/create')}>
-            Add Routes
-          </Button>
-        </Box>
-        <Box className="flex mb-4 mt-2">
-          <TextField
-            variant="outlined"
-            placeholder="Search routes..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            onKeyDown={handleKeyPress}
-            fullWidth
-            sx={{ borderRadius: "30px" }}
-          />
-          <Button variant="contained" onClick={handleSearchSubmit} sx={{ ml: 2 }}>
-            Search
-          </Button>
-        </Box>
-        <Box className="mt-6">
-          {isLoading && <Loading />}
-          {!isLoading && error && <Typography color="error">{error}</Typography>}
-          {!isLoading && !error && routes.length > 0 && (
-            <TableContainer component={Paper}>
-              <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox" sx={{ width: '1%' }}>
-                  </TableCell>
-                  <TableCell sx={{ width: '25%' }}>Name</TableCell>
-                  <TableCell sx={{ width: '25%' }}>Start Point</TableCell>
-                  <TableCell sx={{ width: '25%' }}>End Point</TableCell>
-                  <TableCell sx={{ width: '20%' }}>Distance (km)</TableCell>
-                  <TableCell sx={{ width: '1%' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {routes.map((route) => (
-                  <TableRow key={route.id}>
-                    <TableCell padding="checkbox">
-                    <Checkbox 
-                      checked={selectedRoutes.includes(route.id)}
-                      onChange={() => handleCheckboxChange(route.id)}
-                    />
-                    </TableCell>
-                    <TableCell>{route.name}</TableCell>
-                    <TableCell>{route.startPoint?.name || 'N/A'}</TableCell>
-                    <TableCell>{route.endPoint?.name || 'N/A'}</TableCell>
-                    <TableCell>{route.distance}</TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center">
-                        <IconButton onClick={() => router.push(`/routes/${route.id}`)}>
-                          <VisibilityIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleDeleteClick(route.id)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-          {!isLoading && !error && routes.length === 0 && (
-            <Typography>Something went wrong! Please refresh the page or change the request!</Typography>
-          )}
-        </Box>
-        <Box className="mt-4 flex justify-center">
-          <PaginationCustom 
-            totalPages={totalPages} 
-            currentPage={page} 
-            searchKey={searchTerm} 
-          />
-        </Box>
-      </Box>
+      <IconButton
+        onClick={() => setOpenRoutesDialog(true)}
+        sx={{
+          position: 'absolute',
+          top: 150,
+          left: 9,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          border: '1px solid black',
+          width: 35,
+          height: 35,
+        }}
+      >
+        <MenuIcon />
+      </IconButton>
+
+      <RoutesDialog
+        open={openRoutesDialog}
+        onClose={() => setOpenRoutesDialog(false)}
+        routes={routes}
+        isLoading={isLoading}
+        error={error}
+        searchTerm={searchTerm}
+        handleSearchChange={handleSearchChange}
+        handleSearchSubmit={handleSearchSubmit}
+        handleKeyPress={handleKeyPress}
+        handleDeleteClick={handleDeleteClick}
+        handleCheckboxChange={handleCheckboxChange}
+        selectedRoutes={selectedRoutes}
+        totalPages={totalPages}
+        currentPage={page}
+      />
+
       {/* Confirmation Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this route?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} color="primary">
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="Confirm Delete"
+        content="Are you sure you want to delete this route permanently?"
+        cancelText="Cancel"
+        confirmText="Yes"
+      />
     </Box>
   );
 };

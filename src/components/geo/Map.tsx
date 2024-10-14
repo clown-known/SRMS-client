@@ -1,9 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
-import L, { control } from 'leaflet';
-import { MapContainer, Marker, Popup, TileLayer, LayersControl, LayerGroup, useMap, useMapEvents, } from 'react-leaflet';
+import L from 'leaflet';
+import {
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  LayersControl,
+  LayerGroup,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import 'leaflet-control-geocoder';
 import 'leaflet-routing-machine';
+import { pointService } from '@/service/pointService';
 
 const { BaseLayer, Overlay } = LayersControl;
 
@@ -16,11 +26,20 @@ interface MapProps {
   singleRouteMode?: boolean;
 }
 
-const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes, routes, singleRouteMode, }: MapProps) => {
+const MapContent = ({
+  center,
+  moveToCurrentLocation,
+  onMapClick,
+  selectedRoutes,
+  routes,
+  singleRouteMode,
+}: MapProps) => {
   const [redIcon, setRedIcon] = useState<L.Icon | null>(null);
   const [blueIcon, setBlueIcon] = useState<L.Icon | null>(null);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
-  const [markerAdress, setMarkerAdress] = useState<string | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
+    null
+  );
+  const [markerAddress, setMarkerAddress] = useState<string | null>(null);
   const [points, setPoints] = useState<PointDTO[]>([]);
   const [routingControls, setRoutingControls] = useState<L.Routing.Control[]>(
     []
@@ -48,12 +67,8 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
 
   const fetchPoints = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3002/points');
-      if (!response.ok) {
-        throw new Error('Failed to fetch points');
-      }
-      const data = await response.json();
-      setPoints(data.data.data || []);
+      const response = await pointService.getAllPoints();
+      setPoints(response.data.data || []);
     } catch (error) {
       console.error(error);
     }
@@ -84,7 +99,7 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
           map.setView(center, map.getZoom());
         }
       } catch (error) {
-        return false;
+        console.error('Error setting map view:', error);
       }
     };
 
@@ -105,7 +120,7 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
         }
 
         const address = await getAddressFromLatLng(lat, lng);
-        setMarkerAdress(address);
+        setMarkerAddress(address);
       },
     });
     return null;
@@ -120,6 +135,7 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
       const data = await response.json();
       return data.display_name;
     } catch (error) {
+      console.error('Error getting address:', error);
       return null;
     }
   };
@@ -129,7 +145,6 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
 
     const newControls: L.Routing.Control[] = [];
 
-    // Safely remove existing routing controls
     routingControls.forEach((control) => {
       try {
         if (map.hasLayer(control as any)) {
@@ -161,6 +176,7 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
             router: L.Routing.osrmv1({
               serviceUrl: 'https://router.project-osrm.org/route/v1',
               profile: 'driving',
+              timeout: 20000,
             }),
             lineOptions: {
               styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
@@ -177,6 +193,10 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
             },
           } as any);
 
+          routingControl.on('routingerror', function (e) {
+            console.error('Routing error:', e);
+          });
+
           try {
             routingControl.addTo(map);
             newControls.push(routingControl);
@@ -189,7 +209,6 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
 
     setRoutingControls(newControls);
 
-    // Zoom to fit all selected routes
     if (newControls.length > 0) {
       const bounds = L.latLngBounds(
         newControls.flatMap((control) =>
@@ -222,9 +241,9 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
         <Overlay checked name="Markers">
           <LayerGroup>
             {redIcon &&
-              points.map((point, index) => (
+              points.map((point) => (
                 <Marker
-                  key={index}
+                  key={point.id}
                   position={[point.latitude, point.longitude]}
                   icon={redIcon}
                 >
@@ -237,9 +256,7 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
 
       {markerPosition && blueIcon && (
         <Marker position={markerPosition} icon={blueIcon}>
-          <Popup>
-            {markerAdress ? markerAdress:"Uknown place"}
-          </Popup>
+          <Popup>{markerAddress ? markerAddress : 'Unknown place'}</Popup>
         </Marker>
       )}
 
@@ -248,10 +265,22 @@ const MapContent = ({ center, moveToCurrentLocation, onMapClick, selectedRoutes,
   );
 };
 
-const Map = ({ center = [0, 0], moveToCurrentLocation = false, onMapClick, selectedRoutes, routes, singleRouteMode,}: MapProps) => {
+const Map = ({
+  center = [0, 0],
+  moveToCurrentLocation = false,
+  onMapClick,
+  selectedRoutes,
+  routes,
+  singleRouteMode,
+}: MapProps) => {
   return (
-    <MapContainer center={center} zoom={13} style={{ height: '100vh', width: '100%' }}>
-      <MapContent center={center}
+    <MapContainer
+      center={center}
+      zoom={13}
+      style={{ height: '100vh', width: '100%' }}
+    >
+      <MapContent
+        center={center}
         moveToCurrentLocation={moveToCurrentLocation}
         onMapClick={onMapClick}
         selectedRoutes={selectedRoutes}

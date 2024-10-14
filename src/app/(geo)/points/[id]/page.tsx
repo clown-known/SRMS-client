@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,9 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import Loading from '@/components/Loading';
+import MenuIcon from '@mui/icons-material/Menu';
+import CustomDrawer from '@/components/Drawer';
+import { pointService } from '@/service/pointService';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -19,6 +22,7 @@ const PointDetail = () => {
   const [error, setError] = useState('');
   const router = useRouter();
   const { id } = useParams();
+  const [openDrawer, setOpenDrawer] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -30,21 +34,15 @@ const PointDetail = () => {
       setIsLoading(true);
       setError('');
       try {
-        const response = await fetch(`http://localhost:3002/points/${id}`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        setPoint(result.data);
+        const result = await pointService.getPointById(id as string);
+        setPoint(result);
       } catch (error: any) {
         setError(error.message || 'Failed to fetch point details');
       } finally {
         setIsLoading(false);
       }
     };
-
+    setOpenDrawer(true);
     fetchPointDetail();
   }, [id, router]);
 
@@ -62,64 +60,90 @@ const PointDetail = () => {
   }
 
   return (
-    <Box className="flex">
-      <Box className="w-1/2 p-4">
+    <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
+      <Box sx={{ flex: 1 }}>
         <Map center={point ? [point.latitude, point.longitude] : undefined} />
       </Box>
-      <Box className="w-1/2 p-4">
-        <Box className="flex items-center mb-4 cursor-pointer hover:text-sky-600" onClick={() => router.push('/points')}>
-          <IconButton>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="body1" className="ml-2">Back to Points</Typography>
-        </Box>
-
-        <Box className="flex justify-between items-center mb-4">
-          <Typography variant="h4">{point?.name || 'Loading...'}</Typography>
-          <Button 
-            variant="contained" 
-            sx={{ backgroundColor: 'black', color: 'white' }} 
-            onClick={() => router.push(`/points/${id}/edit`)} 
+      <IconButton
+        onClick={() => setOpenDrawer(true)}
+        sx={{
+          position: 'absolute',
+          top: 150,
+          left: 9,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          border: '1px solid black',
+          width: 35,
+          height: 35,
+        }}
+      >
+        <MenuIcon />
+      </IconButton>
+      <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
+        <Box>
+          <Box
+            className="mb-4 flex cursor-pointer items-center hover:text-sky-600"
+            onClick={() => router.push('/points')}
           >
-            Edit Point
-          </Button>
-        </Box>
+            <IconButton>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="body1" className="ml-2">
+              Back to Points
+            </Typography>
+          </Box>
 
-        <Box className="bg-gray-100 rounded-lg p-4 mb-4 flex justify-between">
-          <Box className="mb-4">
-            <Box className="flex items-center">
-              <AnchorIcon color="primary" className="mr-1" />
-              <Box>
-                <Typography variant="body2" className="font-extralight">Type:</Typography>
-                <Typography variant="body2" className="font-semibold text-lg">
-                  {capitalizeString(point?.type) || 'Loading...'}
-                </Typography>
+          <Box className="mb-4 flex items-center justify-between">
+            <Typography variant="h4">{point?.name || 'Loading...'}</Typography>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: 'black', color: 'white' }}
+              onClick={() => router.push(`/points/${id}/edit`)}
+            >
+              Edit Point
+            </Button>
+          </Box>
+
+          <Box className="mb-4 flex justify-between rounded-lg bg-gray-100 p-4">
+            <Box className="mb-4">
+              <Box className="flex items-center">
+                <AnchorIcon color="primary" className="mr-1" />
+                <Box>
+                  <Typography variant="body2" className="font-extralight">
+                    Type:
+                  </Typography>
+                  <Typography variant="body2" className="text-lg font-semibold">
+                    {capitalizeString(point?.type) || 'Loading...'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box className="mb-4">
+              <Box className="flex items-center">
+                <LocationOnIcon className="mr-1" />
+                <Box>
+                  <Typography variant="body2" className="font-extralight">
+                    Coordinates:
+                  </Typography>
+                  <Typography variant="body2" className="text-lg font-semibold">
+                    {point?.latitude.toFixed(3)}, {point?.longitude.toFixed(3)}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </Box>
-          <Box className="mb-4">
-            <Box className="flex items-center">
-              <LocationOnIcon className="mr-1" />
-              <Box>
-                <Typography variant="body2" className="font-extralight">Coordinates:</Typography>
-                <Typography variant="body2" className="font-semibold text-lg">
-                  {point?.latitude.toFixed(3)}, {point?.longitude.toFixed(3)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
 
-        <Box className="mb-4">
-          <Box className="flex items-center mb-2">
-            <DescriptionIcon className="mr-2" />
-            <Typography variant="h6">Description</Typography>
+          <Box className="mb-4">
+            <Box className="mb-2 flex items-center">
+              <DescriptionIcon className="mr-2" />
+              <Typography variant="h6">Description</Typography>
+            </Box>
+            <Typography variant="body1" className="text-lg">
+              {point?.description || 'Loading...'}
+            </Typography>
           </Box>
-          <Typography variant="body1" className="text-lg">
-            {point?.description || 'Loading...'}
-          </Typography>
         </Box>
-      </Box>
+      </CustomDrawer>
     </Box>
   );
 };

@@ -15,7 +15,7 @@ export interface PointsResponse {
 }
 
 class PointService {
-    private readonly url = '/points';
+    private readonly url = '/route-service/points';
 
     async getAllPoints(page: number = 1, take: number = 10, searchKey?: string): Promise<PointsResponse> {
         try {
