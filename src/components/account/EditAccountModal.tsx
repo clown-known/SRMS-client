@@ -1,17 +1,15 @@
 import React, { useEffect } from 'react';
 import { Modal, Box } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
+import { UpdateAccountRequest } from '@/service/accountService';
 
 interface EditAccountModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: {
-    email: string;
-    roleId: string;
-    profile: Partial<ProfileDTO>;
-  }) => void;
+  onSubmit: (data: UpdateAccountRequest) => void;
   account: AccountDTO;
   roles: RoleDTO[];
+  userPermissions: string[];
 }
 
 const EditAccountModal: React.FC<EditAccountModalProps> = ({
@@ -20,21 +18,33 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
   onSubmit,
   account,
   roles,
+  userPermissions,
 }) => {
-  const { control, handleSubmit, setValue } = useForm();
+  const { control, handleSubmit, setValue } = useForm<UpdateAccountRequest>();
+
+  // Check if user has the 'account:assign-role' permission
+  const canAssignRole = userPermissions?.includes('account:assign-role');
+
+  // const formattedDate = new Date().toISOString().split('T')[0];
+  const convertToDate = (dateString: string | undefined): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  };
 
   useEffect(() => {
     setValue('email', account.email);
-    setValue('roleId', account.role?.id || '');
-    setValue('profile.firstName', account.profile?.firstName || '');
-    setValue('profile.lastName', account.profile?.lastName || '');
-    setValue('profile.phoneNumber', account.profile?.phoneNumber || '');
-    setValue('profile.address', account.profile?.address || '');
-    setValue('profile.dateOfBirth', account.profile?.dateOfBirth || '');
+    if (canAssignRole) setValue('roleId', account.role?.id || '');
+    setValue('firstName', account.profile?.firstName || '');
+    setValue('lastName', account.profile?.lastName || '');
+    setValue('phoneNumber', account.profile?.phoneNumber || '');
+    setValue('address', account.profile?.address || '');
+    if (account.profile?.dateOfBirth)
+      setValue('dateOfBirth', account.profile?.dateOfBirth);
   }, [account, setValue]);
 
   const onFormSubmit = handleSubmit((data) => {
-    // onSubmit(data);
+    onSubmit(data);
     onClose();
   });
 
@@ -51,7 +61,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
           <div className="mb-5 flex gap-4">
             <div className="group relative z-0 w-1/2">
               <Controller
-                name="profile.firstName"
+                name="firstName"
                 control={control}
                 defaultValue=""
                 rules={{ required: 'First name is required' }}
@@ -82,7 +92,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
             </div>
             <div className="group relative z-0 w-1/2">
               <Controller
-                name="profile.lastName"
+                name="lastName"
                 control={control}
                 defaultValue=""
                 rules={{ required: 'Last name is required' }}
@@ -145,14 +155,18 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
           </div>
           <div className="group relative z-0 mb-5 w-full">
             <Controller
-              name="profile.dateOfBirth"
+              name="dateOfBirth"
               control={control}
-              defaultValue=""
-              render={({ field }) => (
+              // defaultValue={null}
+              render={({ field: { onChange, value, ...rest } }) => (
                 <>
                   <input
                     type="date"
-                    {...field}
+                    onChange={(e) => onChange(e.target.value || null)}
+                    value={
+                      value ? new Date(value).toISOString().split('T')[0] : ''
+                    }
+                    {...rest}
                     id="floating_date_of_birth"
                     className="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-3 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0"
                     placeholder=" "
@@ -169,7 +183,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
           </div>
           <div className="group relative z-0 mb-5 w-full">
             <Controller
-              name="profile.phoneNumber"
+              name="phoneNumber"
               control={control}
               defaultValue=""
               // rules={{ required: 'Phone number is required' }}
@@ -199,7 +213,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
           </div>
           <div className="group relative z-0 mb-5 w-full">
             <Controller
-              name="profile.address"
+              name="address"
               control={control}
               defaultValue=""
               render={({ field }) => (
@@ -221,41 +235,42 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
               )}
             />
           </div>
-          <div className="group relative z-0 mb-5 w-full">
-            <Controller
-              name="roleId"
-              control={control}
-              defaultValue=""
-              // rules={{ required: 'Role is required' }}
-              render={({ field, fieldState: { error } }) => (
-                <>
-                  <select
-                    {...field}
-                    id="floating_role"
-                    className="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-3 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0"
-                  >
-                    <option value="">Select a role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                  <label
-                    htmlFor="floating_role"
-                    className="absolute top-3 -z-10 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 duration-300 peer-focus:font-medium peer-focus:text-blue-600"
-                  >
-                    Role
-                  </label>
-                  {error && (
-                    <span className="text-xs text-red-500">
-                      {error.message}
-                    </span>
-                  )}
-                </>
-              )}
-            />
-          </div>
+          {canAssignRole && (
+            <div className="group relative z-0 mb-5 w-full">
+              <Controller
+                name="roleId"
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState: { error } }) => (
+                  <>
+                    <select
+                      {...field}
+                      id="floating_role"
+                      className="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-3 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0"
+                    >
+                      <option value="">Select a role</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label
+                      htmlFor="floating_role"
+                      className="absolute top-3 -z-10 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 duration-300 peer-focus:font-medium peer-focus:text-blue-600"
+                    >
+                      Role
+                    </label>
+                    {error && (
+                      <span className="text-xs text-red-500">
+                        {error.message}
+                      </span>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+          )}
           <div className="flex justify-end gap-4">
             <button
               type="button"

@@ -6,11 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { login } from '@/service/authService';
 import { loginState } from '@/store/userSlice';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 const Login: FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ email: '', password: '' });
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const router = useRouter();
   const dispatch = useDispatch();
 
@@ -43,16 +46,28 @@ const Login: FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      const response = await login({ email, password });
-      dispatch(
-        loginState({
-          username: response.data.name,
-          permission: response.data.token.permission,
-        })
-      );
-      if (response) router.push('/');
+      try {
+        const response = await login({ email, password });
+        dispatch(
+          loginState({
+            username: response.data.name,
+            permission: response.data.token.permission,
+          })
+        );
+        setSnackbarMessage('Login successful!');
+        setSnackbarOpen(true);
+        setTimeout(() => router.push('/'), 1000); // Redirect after 1 second
+      } catch (error) {
+        setSnackbarMessage('Login failed. Please check your credentials.');
+        setSnackbarOpen(true);
+      }
     }
   };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-full max-w-md rounded-lg bg-gray-200 p-8 shadow-lg">
@@ -115,6 +130,11 @@ const Login: FC = () => {
           </button>
         </div>
       </div>
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Modal, Box, Typography, Button } from '@mui/material';
+import React from 'react';
+import { Modal, Box } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { CreateAccountRequest } from '@/service/accountService';
 
@@ -9,6 +9,7 @@ interface AccountModalProps {
   onSubmit: (data: CreateAccountRequest) => void;
   onChange: () => void;
   roles: RoleDTO[];
+  userPermissions: string[];
 }
 
 const AccountModal: React.FC<AccountModalProps> = ({
@@ -17,15 +18,17 @@ const AccountModal: React.FC<AccountModalProps> = ({
   onSubmit,
   onChange,
   roles,
+  userPermissions,
 }) => {
   const { control, handleSubmit } = useForm<CreateAccountRequest>();
   const onFormSubmit = handleSubmit((data) => {
-    console.log(data);
+    // console.log(data);
     onSubmit(data);
     onClose();
   });
 
-  const formattedDate = new Date().toISOString().split('T')[0]; // Default to current date
+  // Check if user has the 'account:assign-role' permission
+  const canAssignRole = userPermissions.includes('account:assign-role');
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -183,45 +186,47 @@ const AccountModal: React.FC<AccountModalProps> = ({
             />
           </div>
 
-          <div className="group relative z-0 mb-5 w-full">
-            <Controller
-              name="roleId"
-              control={control}
-              defaultValue=""
-              // rules={{ required: 'Role is required' }}
-              render={({ field, fieldState: { error } }) => (
-                <>
-                  <select
-                    {...field}
-                    id="floating_role"
-                    className="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-3 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0"
-                    onChange={(e) => {
-                      field.onChange(e);
-                      onChange();
-                    }}
-                  >
-                    <option value="">Select a role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                  <label
-                    htmlFor="floating_role"
-                    className="absolute top-3 -z-10 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 duration-300 peer-focus:font-medium peer-focus:text-blue-600"
-                  >
-                    Role
-                  </label>
-                  {error && (
-                    <span className="text-xs text-red-500">
-                      {error.message}
-                    </span>
-                  )}
-                </>
-              )}
-            />
-          </div>
+          {canAssignRole && (
+            <div className="group relative z-0 mb-5 w-full">
+              <Controller
+                name="roleId"
+                control={control}
+                defaultValue=""
+                render={({ field, fieldState: { error } }) => (
+                  <>
+                    <select
+                      {...field}
+                      id="floating_role"
+                      className="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-3 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        onChange();
+                      }}
+                    >
+                      <option value="">Select a role</option>
+                      {roles?.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                    <label
+                      htmlFor="floating_role"
+                      className="absolute top-3 -z-10 origin-[0] -translate-y-6 scale-75 transform text-sm text-gray-500 duration-300 peer-focus:font-medium peer-focus:text-blue-600"
+                    >
+                      Role
+                    </label>
+                    {error && (
+                      <span className="text-xs text-red-500">
+                        {error.message}
+                      </span>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+          )}
+
           <div className="flex justify-end gap-4">
             <button
               type="button"

@@ -20,11 +20,13 @@ import {
   resetPassword,
   searchAccounts,
   updateAccount,
+  UpdateAccountRequest,
 } from '@/service/accountService';
 import SearchInput from './SearchInput';
 import { RootState, useAppDispatch } from '@/store/store';
 import { fetchUserPermissions } from '@/store/userSlice';
 import Loading from '../Loading';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 interface AccountPageContentProps {
   initialAccounts: AccountsPage;
@@ -45,6 +47,8 @@ export default function AccountPageContent({
   );
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     dispatch(fetchUserPermissions() as any);
@@ -104,20 +108,6 @@ export default function AccountPageContent({
     event.preventDefault();
     handleSearch(searchTerm.trim());
   };
-
-  const handleDeleteAccount = async (id: string) => {
-    await deleteAccount(id);
-    fetchAccounts(searchTerm);
-  };
-
-  const handleUpdateAccount = async (
-    id: string,
-    data: { email: string; roleId: string; profile: Partial<ProfileDTO> }
-  ) => {
-    await updateAccount(id, mapToCreateAccountRequest(data));
-    fetchAccounts(searchTerm);
-  };
-
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
     value: number
@@ -126,16 +116,52 @@ export default function AccountPageContent({
     updateSearchParam(searchTerm, value);
     fetchAccounts(searchTerm, value);
   };
+  const handleDeleteAccount = async (id: string) => {
+    try {
+      await deleteAccount(id);
+      fetchAccounts(searchTerm);
+      setSnackbarMessage('Account deleted successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setSnackbarMessage('Failed to delete account. Please try again.');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleUpdateAccount = async (
+    id: string,
+    data: UpdateAccountRequest
+  ) => {
+    try {
+      console.log(id, data);
+      await updateAccount(id, data);
+      fetchAccounts(searchTerm);
+      setSnackbarMessage('Account updated successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error updating account:', error);
+      setSnackbarMessage('Failed to update account. Please try again.');
+      setSnackbarOpen(true);
+    }
+  };
+
   const handleResetPassword = async (id: string) => {
     try {
       await resetPassword(id);
-      // You might want to show a success message here
-      console.log('Password reset successfully');
+      setSnackbarMessage('Password reset successfully!');
+      setSnackbarOpen(true);
     } catch (error) {
       console.error('Error resetting password:', error);
-      // You might want to show an error message here
+      setSnackbarMessage('Failed to reset password. Please try again.');
+      setSnackbarOpen(true);
     }
   };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
+
   useEffect(() => {
     const searchTerm = searchParams.get('search') || '';
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
@@ -159,6 +185,7 @@ export default function AccountPageContent({
           <AccountModalWrapper
             onAccountCreated={() => fetchAccounts(searchTerm)}
             rolesList={initialRoles}
+            permission={permission}
           />
         )}
       </div>
@@ -184,6 +211,11 @@ export default function AccountPageContent({
           </div>
         </>
       )}
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
+      />
     </div>
   );
 }

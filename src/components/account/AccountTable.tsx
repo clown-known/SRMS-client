@@ -23,6 +23,7 @@ import LockResetIcon from '@mui/icons-material/LockReset';
 import EditAccountModal from './EditAccountModal';
 import ResetPasswordModal from './ResetPasswordModal';
 import DeleteAccountModal from './DeleteAccountModal';
+import { UpdateAccountRequest } from '@/service/accountService';
 
 const fontStack = `ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;
 
@@ -61,10 +62,7 @@ interface AccountTableProps {
   roles: RoleDTO[];
   onDeleteAccount: (id: string) => void;
   onResetPassword: (id: string) => void;
-  onUpdateAccount: (
-    id: string,
-    data: { email: string; roleId: string; profile: Partial<ProfileDTO> }
-  ) => void;
+  onUpdateAccount: (id: string, data: UpdateAccountRequest) => void;
   userPermissions: string[];
 }
 
@@ -119,11 +117,7 @@ export default function AccountTable({
     setAccountToEdit(null);
   };
 
-  const handleEditSubmit = (data: {
-    email: string;
-    roleId: string;
-    profile: Partial<ProfileDTO>;
-  }) => {
+  const handleEditSubmit = (data: UpdateAccountRequest) => {
     if (accountToEdit) {
       onUpdateAccount(accountToEdit.id, data);
       handleEditClose();
@@ -202,6 +196,7 @@ export default function AccountTable({
           onSubmit={handleEditSubmit}
           account={accountToEdit}
           roles={roles}
+          userPermissions={userPermissions}
         />
       )}
       {deleteAccount && (

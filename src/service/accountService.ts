@@ -42,6 +42,17 @@ export interface CreateAccountRequest {
   password: string;
   roleId: string;
 }
+
+export interface UpdateAccountRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roleId?: string;
+  dateOfBirth?: Date;
+  phoneNumber?:string;
+  address?:string
+}
+
 interface ResetPasswordResponse{
   data: boolean
 }
@@ -60,8 +71,8 @@ export const deleteAccount = async (id: string) => {
   
 }
 
-export const updateAccount = async (id : string, data : AccountRe) => {
-  
+export const updateAccount = async (id : string, data : UpdateAccountRequest) => {
+  console.log(data)
 }
 
 export const mapToCreateAccountRequest = (data: any): AccountRe => {

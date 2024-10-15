@@ -18,6 +18,7 @@ import SearchInput from '../account/SearchInput';
 import { RootState, useAppDispatch } from '@/store/store';
 import { fetchUserPermissions } from '@/store/userSlice';
 import Loading from '../Loading';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 interface RolePageContentProps {
   initialRoles: RolesPage;
@@ -38,6 +39,8 @@ export default function RolePageContent({
   );
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     dispatch(fetchUserPermissions() as any);
@@ -100,16 +103,32 @@ export default function RolePageContent({
   };
 
   const handleDeleteRole = async (id: string) => {
-    await deleteRole(id);
-    fetchRoles(searchTerm, page);
+    try {
+      await deleteRole(id);
+      fetchRoles(searchTerm, page);
+      setSnackbarMessage('Role deleted successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      setSnackbarMessage('Failed to delete role. Please try again.');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleUpdateRole = async (
     id: string,
     data: { name: string; permissions: string[] }
   ) => {
-    await updateRole(id, mapToCreateRoleRequest(data));
-    fetchRoles(searchTerm, page);
+    try {
+      await updateRole(id, mapToCreateRoleRequest(data));
+      fetchRoles(searchTerm, page);
+      setSnackbarMessage('Role updated successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error updating role:', error);
+      setSnackbarMessage('Failed to update role. Please try again.');
+      setSnackbarOpen(true);
+    }
   };
 
   const handlePageChange = (
@@ -127,6 +146,10 @@ export default function RolePageContent({
     setPage(currentPage);
     fetchRoles(searchTerm, currentPage);
   }, [fetchRoles, searchParams]);
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
 
   return (
     <div className="bg-gray-100 px-4 py-4">
@@ -168,6 +191,11 @@ export default function RolePageContent({
           </div>
         </>
       )}
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
+      />
     </div>
   );
 }
