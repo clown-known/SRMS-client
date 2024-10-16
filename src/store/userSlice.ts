@@ -5,11 +5,13 @@ interface UserState {
   username: string | null;
   isLoggedIn: boolean;
   permissions: string[]; 
+  roleId: string|null;
 }
 const initialState: UserState = {
   username: null,
   isLoggedIn: false, 
   permissions: [],
+  roleId: null
 };
 export const fetchUserPermissions = createAsyncThunk(
   'user/fetchUserPermissions',
@@ -44,6 +46,7 @@ export const userSlice = createSlice({
     builder.addCase(fetchUserPermissions.fulfilled, (state, action) => {
       state.permissions = action.payload.permissions;
       state.username = action.payload.name
+      state.roleId = action.payload.roleId
     });
   },
 });

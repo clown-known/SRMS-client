@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { Modal, Box } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { UpdateAccountRequest } from '@/service/accountService';
+import CancelButton from '../CancelButton';
+import SubmitButton from '../SubmitButton';
 
 interface EditAccountModalProps {
   open: boolean;
@@ -272,19 +274,8 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
             </div>
           )}
           <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg bg-red-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-600 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
-            >
-              Update Account
-            </button>
+            <CancelButton onClick={onClose} />
+            <SubmitButton>Update Account</SubmitButton>
           </div>
         </form>
       </Box>

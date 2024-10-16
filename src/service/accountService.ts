@@ -53,9 +53,16 @@ export interface UpdateAccountRequest {
   address?:string
 }
 
+
 interface ResetPasswordResponse{
   data: boolean
 }
+
+interface AssignRoleToUserRequest {
+  userId: string;
+  roleId: string;
+}
+
 export const getAccounts = async (page: number = 1, take: number = 10): Promise<AccountsPage> => {
   const response = await axiosInstance.get<AccountsResponse>(`authentication-service/account?page=${page}&take=${take}`);
   return response.data.data;
@@ -68,11 +75,23 @@ export const deleteAccount = async (id: string) => {
   } catch (error) {
     return false;
   }
-  
 }
 
 export const updateAccount = async (id : string, data : UpdateAccountRequest) => {
-  console.log(data)
+  try {
+    const response = await axiosInstance.put(`authentication-service/account/update${id}`,data);
+  return response.data;
+  } catch (error) {
+    return false;
+  }
+}
+export const updateAccountWithRole = async (id : string, data : UpdateAccountRequest) => {
+  try {
+    const response = await axiosInstance.put(`authentication-service/account/update-with-role/${id}`,data);
+  return response.data;
+  } catch (error) {
+    return false;
+  }
 }
 
 export const mapToCreateAccountRequest = (data: any): AccountRe => {
@@ -106,4 +125,23 @@ export const resetPassword = async (id: string) => {
     return false;
   }
   
+}
+
+export const assignRole = async (data: AssignRoleToUserRequest) => {
+  try {
+    const response = await axiosInstance.put(`authentication-service/account/assign`,data);
+    return response.data;
+  } catch (error) {
+    console.error('Error assigning role:', error);
+    throw error;
+  }
+}
+export const unAssignRole = async (id: string) => {
+  try {
+    const response = await axiosInstance.put(`authentication-service/account/unassign/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error assigning role:', error);
+    throw error;
+  }
 }

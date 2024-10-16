@@ -8,22 +8,21 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   IconButton,
   styled,
   Tooltip,
 } from '@mui/material';
-import { useState } from 'react';
-import { Delete, Edit } from '@mui/icons-material';
+import { useEffect, useState } from 'react';
+import { Delete, Edit, AssignmentInd } from '@mui/icons-material';
 import LockResetIcon from '@mui/icons-material/LockReset';
+import { useSelector } from 'react-redux';
 import EditAccountModal from './EditAccountModal';
 import ResetPasswordModal from './ResetPasswordModal';
 import DeleteAccountModal from './DeleteAccountModal';
-import { UpdateAccountRequest } from '@/service/accountService';
+import { unAssignRole, UpdateAccountRequest } from '@/service/accountService';
+import AssignRoleModal from './AssignRoleModal';
+import { RootState, useAppDispatch } from '@/store/store';
+import { fetchUserPermissions } from '@/store/userSlice';
 
 const fontStack = `ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;
 
@@ -64,6 +63,8 @@ interface AccountTableProps {
   onResetPassword: (id: string) => void;
   onUpdateAccount: (id: string, data: UpdateAccountRequest) => void;
   userPermissions: string[];
+  onAssignRole: (userId: string, roleId: string) => void;
+  onUniAssignRole: (userId: string) => void;
 }
 
 export default function AccountTable({
@@ -73,19 +74,29 @@ export default function AccountTable({
   onUpdateAccount,
   onResetPassword,
   userPermissions,
+  onAssignRole,
+  onUniAssignRole,
 }: AccountTableProps) {
-  const [deleteAccount, setDeleteAccount] = useState<AccountDTO | null>(null);
+  const dispatch = useAppDispatch();
+  const userRoleId = useSelector((state: RootState) => state.user.roleId); // Get permission from global state
+  useEffect(() => {
+    dispatch(fetchUserPermissions() as any);
+  }, [dispatch]);
+
   const [resetPasswordAccount, setResetPasswordAccount] =
     useState<AccountDTO | null>(null);
-
-  const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
+  const [deleteAccount, setDeleteAccount] = useState<AccountDTO | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [accountToEdit, setAccountToEdit] = useState<AccountDTO | null>(null);
+
+  const [assignRoleAccount, setAssignRoleAccount] = useState<AccountDTO | null>(
+    null
+  );
 
   const hasPermission = (permission: string) => {
     return userPermissions.includes(permission);
   };
-
+  const isSameRoleOfUser = (roleId?: string) => roleId === userRoleId;
   const handleResetPasswordClick = (account: AccountDTO) => {
     setResetPasswordAccount(account);
   };
@@ -124,6 +135,22 @@ export default function AccountTable({
     }
   };
 
+  const handleAssignRoleClick = (account: AccountDTO) => {
+    setAssignRoleAccount(account);
+  };
+
+  const handleAssignRoleClose = () => {
+    setAssignRoleAccount(null);
+  };
+
+  const handleAssignRoleSubmit = (roleId: string | null) => {
+    if (assignRoleAccount) {
+      if (roleId) onAssignRole(assignRoleAccount.id, roleId);
+      else onUniAssignRole(assignRoleAccount.id);
+      handleAssignRoleClose();
+    }
+  };
+
   return (
     <>
       <StyledTableContainer>
@@ -150,29 +177,44 @@ export default function AccountTable({
                   </StyledTableCell>
                   <StyledTableCell>{account.role?.name}</StyledTableCell>
                   <StyledTableCell>
-                    {hasPermission('account:update') && (
-                      <Tooltip title="Edit">
-                        <IconButton onClick={() => handleEditClick(account)}>
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {hasPermission('account:reset-password') && (
-                      <Tooltip title="Reset Password">
-                        <IconButton
-                          onClick={() => handleResetPasswordClick(account)}
-                        >
-                          <LockResetIcon />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {hasPermission('account:delete') && (
-                      <Tooltip title="Delete">
-                        <IconButton onClick={() => handleDeleteClick(account)}>
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    )}
+                    {hasPermission('account:update') &&
+                      !isSameRoleOfUser(account.role?.id) && (
+                        <Tooltip title="Edit">
+                          <IconButton onClick={() => handleEditClick(account)}>
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    {hasPermission('account:assign-role') &&
+                      !isSameRoleOfUser(account.role?.id) && (
+                        <Tooltip title="Assign Role">
+                          <IconButton
+                            onClick={() => handleAssignRoleClick(account)}
+                          >
+                            <AssignmentInd />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    {hasPermission('account:reset-password') &&
+                      !isSameRoleOfUser(account.role?.id) && (
+                        <Tooltip title="Reset Password">
+                          <IconButton
+                            onClick={() => handleResetPasswordClick(account)}
+                          >
+                            <LockResetIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    {hasPermission('account:delete') &&
+                      !isSameRoleOfUser(account.role?.id) && (
+                        <Tooltip title="Delete">
+                          <IconButton
+                            onClick={() => handleDeleteClick(account)}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
@@ -205,6 +247,15 @@ export default function AccountTable({
           onClose={() => setDeleteAccount(null)}
           onConfirm={handleDeleteConfirm}
           email={deleteAccount.email}
+        />
+      )}
+      {assignRoleAccount && (
+        <AssignRoleModal
+          open={!!assignRoleAccount}
+          onClose={handleAssignRoleClose}
+          onSubmit={handleAssignRoleSubmit}
+          account={assignRoleAccount}
+          roles={roles}
         />
       )}
     </>

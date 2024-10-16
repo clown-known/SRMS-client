@@ -1,5 +1,7 @@
 import { Button } from '@headlessui/react';
 import React, { useState } from 'react';
+import CancelButton from '../CancelButton';
+import SubmitButton from '../SubmitButton';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -97,20 +99,15 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 required
               />
             </div>
-            <div className="flex items-center justify-end rounded-b border-t border-solid border-gray-300 pt-6">
-              <button
-                className="background-transparent mb-1 mr-1 px-6 py-2 text-sm font-bold uppercase text-red-500 outline-none transition-all duration-150 ease-linear focus:outline-none"
-                type="button"
-                onClick={onClose}
-              >
-                Close
-              </button>
-              <button
+            <div className="flex justify-end rounded-b border-t border-solid border-gray-300 pt-6">
+              <CancelButton onClick={onClose} />
+              <SubmitButton>Save Changes</SubmitButton>
+              {/* <button
                 className="mb-1 mr-1 rounded bg-blue-500 px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-blue-600"
                 type="submit"
               >
                 Save Changes
-              </button>
+              </button> */}
             </div>
           </form>
         </div>

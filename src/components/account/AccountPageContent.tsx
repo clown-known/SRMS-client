@@ -21,6 +21,9 @@ import {
   searchAccounts,
   updateAccount,
   UpdateAccountRequest,
+  assignRole,
+  updateAccountWithRole,
+  unAssignRole,
 } from '@/service/accountService';
 import SearchInput from './SearchInput';
 import { RootState, useAppDispatch } from '@/store/store';
@@ -123,7 +126,6 @@ export default function AccountPageContent({
       setSnackbarMessage('Account deleted successfully!');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error deleting account:', error);
       setSnackbarMessage('Failed to delete account. Please try again.');
       setSnackbarOpen(true);
     }
@@ -134,13 +136,13 @@ export default function AccountPageContent({
     data: UpdateAccountRequest
   ) => {
     try {
-      console.log(id, data);
-      await updateAccount(id, data);
+      if (hasPermission('account:assign-role'))
+        await updateAccountWithRole(id, data);
+      else await updateAccount(id, data);
       fetchAccounts(searchTerm);
       setSnackbarMessage('Account updated successfully!');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error updating account:', error);
       setSnackbarMessage('Failed to update account. Please try again.');
       setSnackbarOpen(true);
     }
@@ -152,12 +154,33 @@ export default function AccountPageContent({
       setSnackbarMessage('Password reset successfully!');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error resetting password:', error);
       setSnackbarMessage('Failed to reset password. Please try again.');
       setSnackbarOpen(true);
     }
   };
 
+  const handleAssignRole = async (userId: string, roleId: string) => {
+    try {
+      await assignRole({ userId, roleId });
+      fetchAccounts(searchTerm);
+      setSnackbarMessage('Role assigned successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage('Failed to assign role. Please try again.');
+      setSnackbarOpen(true);
+    }
+  };
+  const handleUnAssignRole = async (userId: string) => {
+    try {
+      await unAssignRole(userId);
+      fetchAccounts(searchTerm);
+      setSnackbarMessage('Role assigned successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage('Failed to assign role. Please try again.');
+      setSnackbarOpen(true);
+    }
+  };
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
@@ -198,6 +221,8 @@ export default function AccountPageContent({
             onDeleteAccount={handleDeleteAccount}
             onUpdateAccount={handleUpdateAccount}
             onResetPassword={handleResetPassword}
+            onAssignRole={handleAssignRole}
+            onUniAssignRole={handleUnAssignRole}
             roles={initialRoles}
             userPermissions={permission}
           />
