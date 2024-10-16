@@ -159,6 +159,7 @@ const RouteEdit = () => {
 
   useEffect(() => {
     fetchRouteDetails();
+    setOpenDrawer(true);
   }, [id]);
 
   const fetchRouteDetails = useCallback(async () => {
@@ -247,6 +248,7 @@ const RouteEdit = () => {
             routes={[route]}
             singleRouteMode={true}
             center={[route.startPoint.latitude, route.startPoint.longitude]}
+            
           />
         ) : (
           <Loading />

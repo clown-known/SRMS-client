@@ -49,6 +49,7 @@ const RouteDetail = () => {
   useEffect(() => {
     if (id) {
       fetchRouteDetails();
+      setOpenDrawer(true);
     }
   }, [id]);
 
@@ -60,6 +61,7 @@ const RouteDetail = () => {
             routes={[route]}
             singleRouteMode={true}
             center={[route.startPoint.latitude, route.startPoint.longitude]}
+            
           />
         ) : (
           <Loading />
@@ -95,14 +97,6 @@ const RouteDetail = () => {
             <Typography variant="h4">
               {isLoading ? 'Loading...' : route?.name || 'Route not found'}
             </Typography>
-            <Button
-              variant="contained"
-              sx={{ backgroundColor: 'black', color: 'white' }}
-              onClick={() => router.push(`/routes/${id}/edit`)}
-              disabled={isLoading || !route}
-            >
-              Edit Route
-            </Button>
           </Box>
 
           {isLoading ? (

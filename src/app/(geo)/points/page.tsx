@@ -15,6 +15,7 @@ import {
   DialogContentText,
   DialogActions,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -25,6 +26,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import Loading from '@/components/Loading';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import { pointService } from '@/service/pointService';
+import PointDetailsCard from '@/components/points/PointDetail';
+import SearchInput from '@/components/geo/SearchInput';
+import AddIcon from '@mui/icons-material/Add';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 // Load the map component
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
@@ -43,6 +49,8 @@ const Points = () => {
   const [open, setOpen] = useState(false);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   // Set initial page number from search params
   const page = parseInt(searchParams.get('page') || '1', 10);
@@ -58,12 +66,12 @@ const Points = () => {
           : '';
         const response = await pointService.getAllPoints(
           currentPage,
-          3,
+          10,
           searchKey
         );
         if (response.data?.data && Array.isArray(response.data.data)) {
           setPoints(response.data.data);
-          setTotalPages(Math.ceil(response.data.meta.itemCount / 3));
+          setTotalPages(Math.ceil(response.data.meta.itemCount / 10));
         } else {
           throw new Error('Unexpected data structure');
         }
@@ -103,7 +111,7 @@ const Points = () => {
     try {
       await pointService.deletePoint(selectedPointId);
 
-      fetchPoints(page, searchTerm); // Refresh points after deletion
+      fetchPoints(page, searchTerm);
       handleCloseDialog();
     } catch (err: any) {
       setError(err.message || 'Failed to delete point');
@@ -125,50 +133,80 @@ const Points = () => {
     setSelectedPointId(null);
   };
 
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
+  };
+
+  const handleEditPoint = (id: string) => {
+    router.push(`/points/${id}/edit`);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
-      <Box sx={{ flex: 1 }}>
-        <Map moveToCurrentLocation={true} />
+      <Box sx={{ flex: 1, position: 'relative' }}>
+        <Map moveToCurrentLocation={true} onPointClick={handlePointClick} />
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 20,
+              left: openDrawer ? '28%' : 50,
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
+          >
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
       <IconButton
-        onClick={() => setOpenDrawer(true)}
+        onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
           position: 'absolute',
-          top: 150,
-          left: 9,
+          top: '50%', 
+          left: openDrawer ? 397 : -3, 
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 35,
-          height: 35,
+          width: 20, 
+          height: 50, 
+          borderRadius: 1,
+          transform: 'translateY(-50%)',
+          transition: 'left 0.3s ease-in-out',
         }}
       >
-        <MenuIcon />
+        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
+
       <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
         <Box>
-          <Box className="mb-4 flex items-center justify-between">
-            <Typography variant="h4">POINTS</Typography>
-            <Button
-              variant="contained"
-              sx={{ backgroundColor: 'black', color: 'white' }}
+          <Box className="mb-4 mt-2 flex items-center justify-between">
+            <Box className="mr-10 flex-grow">
+              <SearchInput
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Searching point..."
+                onKeyDown={handleKeyPress}
+              />
+            </Box>
+            <IconButton
               onClick={() => router.push('/points/create')}
+              sx={{
+                backgroundColor: 'black',
+                color: 'white',
+                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' },
+              }}
+              size="small"
             >
-              Add Point
-            </Button>
-          </Box>
-          <Box className="mb-3 flex">
-            <TextField
-              variant="outlined"
-              placeholder="Search points..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleKeyPress}
-              fullWidth
-              sx={{ borderRadius: '30px' }}
-            />
-            <IconButton onClick={handleSearchSubmit} sx={{ ml: 2 }}>
-              <SearchIcon />
+              <Tooltip title="Add new point" arrow>
+                <AddIcon fontSize="small" />
+              </Tooltip>
             </IconButton>
           </Box>
           <Box className="mt-6">

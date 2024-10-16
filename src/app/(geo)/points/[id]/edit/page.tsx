@@ -22,6 +22,8 @@ import Loading from '@/components/Loading';
 import MenuIcon from '@mui/icons-material/Menu';
 import CustomDrawer from '@/components/Drawer';
 import { pointService } from '@/service/pointService';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -38,6 +40,8 @@ const PointEdit = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -123,25 +127,39 @@ const PointEdit = () => {
     return <Typography color="error">{error}</Typography>;
   }
 
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
+  };
+
+
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
         <Map center={getMapCenter()} onMapClick={onMapClick} />
       </Box>
       <IconButton
-        onClick={() => setOpenDrawer(true)}
+        onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
           position: 'absolute',
-          top: 150,
-          left: 9,
+          top: '50%', 
+          left: openDrawer ? 397 : -3, 
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 35,
-          height: 35,
+          width: 20, 
+          height: 50, 
+          borderRadius: 1,
+          transform: 'translateY(-50%)',
+          transition: 'left 0.3s ease-in-out',
         }}
       >
-        <MenuIcon />
+        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
       <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
         <Box>

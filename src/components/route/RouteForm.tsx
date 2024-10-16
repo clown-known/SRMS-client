@@ -77,9 +77,7 @@ const RouteForm: React.FC<RouteFormProps> = ({
 
       <CustomInput label="Estimated Time" value={TimeDisplay} disabled={true} />
 
-      <Typography variant="subtitle1" className="mb-2">
-        Description
-      </Typography>
+    
       <TextareaAutosize
         minRows={3}
         placeholder="Enter description"

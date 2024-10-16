@@ -7,7 +7,9 @@ import dynamic from 'next/dynamic';
 import MenuIcon from '@mui/icons-material/Menu';
 import { routeService } from '@/service/routeService';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
-import RoutesDialog from '@/components/route/MenuDialog';
+import RoutesDrawer from '@/components/route/RoutesDrawer';
+import CloseIcon from '@mui/icons-material/Close';
+import PointDetailsCard from '@/components/points/PointDetail';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -25,9 +27,11 @@ const Routes = () => {
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [openRoutesDialog, setOpenRoutesDialog] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   // Set initial page number from search params
-  const page = parseInt(searchParams.get("page") || "1", 10);
+  const page = parseInt(searchParams.get('page') || '1', 10);
 
   // Fetch routes
   const fetchRoutes = useCallback(
@@ -108,11 +112,20 @@ const Routes = () => {
   const handleCheckboxChange = (routeId: string) => {
     setSelectedRoutes((prev) =>
       prev.includes(routeId)
-        ? prev.filter(id => id !== routeId)
+        ? prev.filter((id) => id !== routeId)
         : [...prev, routeId]
     );
   };
-  
+
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
+  };
 
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
@@ -121,7 +134,21 @@ const Routes = () => {
           moveToCurrentLocation={true}
           routes={routes}
           selectedRoutes={selectedRoutes}
+          onPointClick={handlePointClick}
         />
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: openRoutesDialog ? 150 : 20,
+              left: openRoutesDialog ? 740 : 50, 
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
+          >
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
       <IconButton
         onClick={() => setOpenRoutesDialog(true)}
@@ -139,7 +166,7 @@ const Routes = () => {
         <MenuIcon />
       </IconButton>
 
-      <RoutesDialog
+      <RoutesDrawer
         open={openRoutesDialog}
         onClose={() => setOpenRoutesDialog(false)}
         routes={routes}
@@ -148,7 +175,6 @@ const Routes = () => {
         searchTerm={searchTerm}
         handleSearchChange={handleSearchChange}
         handleSearchSubmit={handleSearchSubmit}
-        handleKeyPress={handleKeyPress}
         handleDeleteClick={handleDeleteClick}
         handleCheckboxChange={handleCheckboxChange}
         selectedRoutes={selectedRoutes}

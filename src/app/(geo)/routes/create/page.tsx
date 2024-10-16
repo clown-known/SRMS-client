@@ -203,7 +203,7 @@ const RouteCreate = () => {
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
-        <Map singleRouteMode={true} />
+        <Map singleRouteMode={true} moveToCurrentLocation={true} />
       </Box>
       <IconButton
         onClick={() => setOpenDrawer(true)}
