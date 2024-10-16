@@ -1,63 +1,34 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  Box,
-  Button,
-  Checkbox,
-  IconButton,
-  TextField,
-  Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Pagination,
-} from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import DeleteIcon from '@mui/icons-material/Delete';
-import debounce from 'lodash/debounce';
 import dynamic from 'next/dynamic';
+import MenuIcon from '@mui/icons-material/Menu';
+import { routeService } from '@/service/routeService';
+import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
+import RoutesDrawer from '@/components/route/RoutesDrawer';
+import CloseIcon from '@mui/icons-material/Close';
+import PointDetailsCard from '@/components/points/PointDetail';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
-
-interface Point {
-  latitude: number;
-  longitude: number;
-  name: string;
-}
-
-interface Route {
-  id: number;
-  name: string;
-  startPoint: Point;
-  endPoint: Point;
-  distance: number;
-  points: Point[];
-}
 
 const Routes = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [routes, setRoutes] = useState<Route[]>([]);
+  const [routes, setRoutes] = useState<RouteDTO[]>([]);
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get('searchKey') || ''
   );
   const [openDialog, setOpenDialog] = useState(false);
-  const [routeToDelete, setRouteToDelete] = useState<number | null>(null);
-  const [selectedRoutes, setSelectedRoutes] = useState<number[]>([]);
+  const [routeToDelete, setRouteToDelete] = useState<string | null>(null);
+  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [openRoutesDialog, setOpenRoutesDialog] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   // Set initial page number from search params
   const page = parseInt(searchParams.get('page') || '1', 10);
@@ -67,33 +38,22 @@ const Routes = () => {
     async (currentPage: number, search: string) => {
       setIsLoading(true);
       try {
-        const searchParam = search
-          ? `&searchKey=${encodeURIComponent(search)}`
-          : '';
-        const response = await fetch(
-          `http://localhost:3002/routes?page=${currentPage}&take=5${searchParam}`
+        const response = await routeService.getAllRoutes(
+          currentPage,
+          10,
+          search
         );
-        if (!response.ok) {
-          throw new Error('Fetch failed');
-        }
+        const { data } = response;
 
-        const responseData = await response.json();
-        console.log(responseData);
-
-        if (
-          responseData &&
-          responseData.data &&
-          Array.isArray(responseData.data.data)
-        ) {
-          setRoutes(responseData.data.data);
-          setTotalPages(Math.ceil(responseData.data.meta.itemCount / 5));
+        if (data.data && Array.isArray(data.data)) {
+          setRoutes(data.data);
+          setTotalPages(Math.ceil(data.meta.itemCount / 10));
         } else {
-          console.error('Unexpected data structure:', responseData);
           setError('Unexpected data structure received from server');
         }
       } catch (error) {
         console.error(error);
-        setError('An error occurred while fetching data');
+        setError('An error occurred while fetching routes');
       } finally {
         setIsLoading(false);
       }
@@ -103,6 +63,9 @@ const Routes = () => {
 
   useEffect(() => {
     fetchRoutes(page, searchParams.get('searchKey') || '');
+    if (searchParams.get('searchKey') || searchParams.get('page')) {
+      setOpenRoutesDialog(true);
+    }
   }, [page, searchParams, fetchRoutes]);
 
   // Handle search
@@ -119,22 +82,16 @@ const Routes = () => {
     if (e.key === 'Enter') handleSearchSubmit();
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setRouteToDelete(id);
     setOpenDialog(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (routeToDelete !== null) {
+    if (routeToDelete) {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `http://localhost:3002/routes/${routeToDelete}`,
-          { method: 'DELETE' }
-        );
-        if (!response.ok) {
-          throw new Error('Delete failed');
-        }
+        await routeService.deleteRoute(routeToDelete);
         fetchRoutes(page, searchTerm);
       } catch (error) {
         console.error(error);
@@ -152,17 +109,7 @@ const Routes = () => {
     setRouteToDelete(null);
   };
 
-  const handlePageChange = (
-    event: React.ChangeEvent<unknown>,
-    value: number
-  ) => {
-    const searchKey = searchTerm
-      ? `&searchKey=${encodeURIComponent(searchTerm)}`
-      : '';
-    router.push(`/routes?page=${value}${searchKey}`);
-  };
-
-  const handleCheckboxChange = (routeId: number) => {
+  const handleCheckboxChange = (routeId: string) => {
     setSelectedRoutes((prev) =>
       prev.includes(routeId)
         ? prev.filter((id) => id !== routeId)
@@ -170,125 +117,81 @@ const Routes = () => {
     );
   };
 
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
+  };
+
   return (
-    <Box className="flex">
-      <Box className="w-1/2 p-4">
+    <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
+      <Box sx={{ flex: 1 }}>
         <Map
-          moveToCurrentLocation
+          moveToCurrentLocation={true}
           routes={routes}
           selectedRoutes={selectedRoutes}
+          onPointClick={handlePointClick}
         />
-      </Box>
-      <Box className="w-1/2 p-4">
-        <Box className="mb-4 flex items-center justify-between">
-          <Typography variant="h4">Shipping Routes</Typography>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: 'black', color: 'white' }}
-            onClick={() => router.push('/routes/create')}
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: openRoutesDialog ? 150 : 20,
+              left: openRoutesDialog ? 740 : 50, 
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
           >
-            Add Routes
-          </Button>
-        </Box>
-        <Box className="mb-4 mt-2 flex">
-          <TextField
-            variant="outlined"
-            placeholder="Search routes..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            onKeyDown={handleKeyPress}
-            fullWidth
-            sx={{ borderRadius: '30px' }}
-          />
-          <Button
-            variant="contained"
-            onClick={handleSearchSubmit}
-            sx={{ ml: 2 }}
-          >
-            Search
-          </Button>
-        </Box>
-        <Box className="mt-6">
-          {isLoading && <Typography>Loading...</Typography>}
-          {!isLoading && error && (
-            <Typography color="error">{error}</Typography>
-          )}
-          {!isLoading && !error && routes.length > 0 && (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox" sx={{ width: '1%' }} />
-                    <TableCell sx={{ width: '25%' }}>Name</TableCell>
-                    <TableCell sx={{ width: '25%' }}>Start Point</TableCell>
-                    <TableCell sx={{ width: '25%' }}>End Point</TableCell>
-                    <TableCell sx={{ width: '20%' }}>Distance (km)</TableCell>
-                    <TableCell sx={{ width: '1%' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {routes.map((route) => (
-                    <TableRow key={route.id}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedRoutes.includes(route.id)}
-                          onChange={() => handleCheckboxChange(route.id)}
-                        />
-                      </TableCell>
-                      <TableCell>{route.name}</TableCell>
-                      <TableCell>{route.startPoint?.name || 'N/A'}</TableCell>
-                      <TableCell>{route.endPoint?.name || 'N/A'}</TableCell>
-                      <TableCell>{route.distance}</TableCell>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          <IconButton
-                            onClick={() => router.push(`/routes/${route.id}`)}
-                          >
-                            <VisibilityIcon />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => handleDeleteClick(route.id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-          {!isLoading && !error && routes.length === 0 && (
-            <Typography>No routes found</Typography>
-          )}
-        </Box>
-        <Box className="mt-4 flex justify-center">
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-          />
-        </Box>
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
+      <IconButton
+        onClick={() => setOpenRoutesDialog(true)}
+        sx={{
+          position: 'absolute',
+          top: 150,
+          left: 9,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          border: '1px solid black',
+          width: 35,
+          height: 35,
+        }}
+      >
+        <MenuIcon />
+      </IconButton>
+
+      <RoutesDrawer
+        open={openRoutesDialog}
+        onClose={() => setOpenRoutesDialog(false)}
+        routes={routes}
+        isLoading={isLoading}
+        error={error}
+        searchTerm={searchTerm}
+        handleSearchChange={handleSearchChange}
+        handleSearchSubmit={handleSearchSubmit}
+        handleDeleteClick={handleDeleteClick}
+        handleCheckboxChange={handleCheckboxChange}
+        selectedRoutes={selectedRoutes}
+        totalPages={totalPages}
+        currentPage={page}
+      />
+
       {/* Confirmation Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this route?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} color="primary">
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title="Confirm Delete"
+        content="Are you sure you want to delete this route permanently?"
+        cancelText="Cancel"
+        confirmText="Yes"
+      />
     </Box>
   );
 };
