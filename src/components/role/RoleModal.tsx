@@ -43,7 +43,7 @@ const RoleModal: React.FC<RoleModalProps> = ({
   };
 
   const filteredPermissions = useMemo(() => {
-    return permissions.filter((permission) =>
+    return permissions?.filter((permission) =>
       permission.module?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [permissions, searchTerm]);
@@ -67,7 +67,7 @@ const RoleModal: React.FC<RoleModalProps> = ({
           boxShadow: 24,
           p: 4,
           borderRadius: '0.5rem',
-          height: '85vh',
+          height: '90vh',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -141,7 +141,7 @@ const RoleModal: React.FC<RoleModalProps> = ({
           </Box>
           <Box sx={{ flexGrow: 1, overflowY: 'auto', mb: 2 }}>
             <Grid container spacing={2} sx={{ maxHeight: '300px' }}>
-              {filteredPermissions.map((permission) => (
+              {filteredPermissions?.map((permission) => (
                 <Grid item xs={6} key={permission.id}>
                   <FormControlLabel
                     control={
