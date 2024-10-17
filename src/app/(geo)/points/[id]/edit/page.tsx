@@ -24,6 +24,7 @@ import CustomDrawer from '@/components/Drawer';
 import { pointService } from '@/service/pointService';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import PointDetailsCard from '@/components/points/PointDetailCard';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -141,7 +142,20 @@ const PointEdit = () => {
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
-        <Map center={getMapCenter()} onMapClick={onMapClick} />
+        <Map center={getMapCenter()} onMapClick={onMapClick} onPointClick={handlePointClick} />
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 80,
+              left: openDrawer ? 430 : 50,
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
+          >
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
       <IconButton
         onClick={() => setOpenDrawer(!openDrawer)}

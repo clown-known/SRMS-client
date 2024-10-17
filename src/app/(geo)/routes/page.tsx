@@ -9,7 +9,7 @@ import { routeService } from '@/service/routeService';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import RoutesDrawer from '@/components/route/RoutesDrawer';
 import CloseIcon from '@mui/icons-material/Close';
-import PointDetailsCard from '@/components/points/PointDetail';
+import PointDetailsCard from '@/components/points/PointDetailCard';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 

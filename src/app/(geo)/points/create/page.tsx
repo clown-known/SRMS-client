@@ -33,6 +33,8 @@ const CreatePoint = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   const handleSubmit = async () => {
     if (!name || !latitude || !longitude || !type) {
@@ -71,6 +73,16 @@ const CreatePoint = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
+  };
+
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
   };
 
   return (

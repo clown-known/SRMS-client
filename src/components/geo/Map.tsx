@@ -105,7 +105,7 @@ const MapContent = ({
             (position) => {
               const { latitude, longitude } = position.coords;
               if (map) {
-                map.flyTo([latitude, longitude], 8);
+                map.setView([latitude, longitude], 8);
                 initialViewSet.current = true;
               }
             },
@@ -217,53 +217,58 @@ const MapContent = ({
     } catch (error) {
       console.error('Error removing route:', error);
     }
-
-    routes.forEach((route) => {
-      if (
-        (selectedRoutes?.includes(route.id) || singleRouteMode) &&
-        route.startPoint &&
-        route.endPoint
-      ) {
-        const waypoints = [
-          L.latLng(route.startPoint.latitude, route.startPoint.longitude),
-          ...(route.points
-            ? route.points.map((point) =>
-                L.latLng(point.latitude, point.longitude)
-              )
-            : []),
-          L.latLng(route.endPoint.latitude, route.endPoint.longitude),
-        ];
-
-        if (routingControlsRef.current[route.id]) {
-          routingControlsRef.current[route.id].setWaypoints(waypoints);
-        } else {
-          const routingControl = L.Routing.control({
-            waypoints,
-            router: L.Routing.osrmv1({
-              serviceUrl: 'https://router.project-osrm.org/route/v1',
-              profile: 'driving',
-              timeout: 20000,
-            }),
-            lineOptions: {
-              styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
-              extendToWaypoints: true,
-              missingRouteTolerance: 100,
-            },
-            addWaypoints: false,
-            fitSelectedRoutes: true,
-            showAlternatives: false,
-            routeWhileDragging: false,
-            show: false,
-            createMarker: () => null,
-          } as any);
-
-          if (mapRef.current) {
-            routingControl.addTo(mapRef.current);
-            routingControlsRef.current[route.id] = routingControl;
+    try {
+      routes.forEach((route) => {
+        if (
+          (selectedRoutes?.includes(route.id) || singleRouteMode) &&
+          route.startPoint &&
+          route.endPoint
+        ) {
+          const waypoints = [
+            L.latLng(route.startPoint.latitude, route.startPoint.longitude),
+            ...(route.points
+              ? route.points.map((point) =>
+                  L.latLng(point.latitude, point.longitude)
+                )
+              : []),
+            L.latLng(route.endPoint.latitude, route.endPoint.longitude),
+          ];
+  
+          if (routingControlsRef.current[route.id]) {
+            routingControlsRef.current[route.id].setWaypoints(waypoints);
+          } else {
+            const routingControl = L.Routing.control({
+              waypoints,
+              router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: 'driving',
+                timeout: 20000,
+              }),
+              lineOptions: {
+                styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
+                extendToWaypoints: true,
+                missingRouteTolerance: 100,
+              },
+              addWaypoints: false,
+              fitSelectedRoutes: true,
+              showAlternatives: false,
+              routeWhileDragging: false,
+              show: false,
+              createMarker: () => null,
+            } as any);
+  
+            if (mapRef.current) {
+              routingControl.addTo(mapRef.current);
+              routingControlsRef.current[route.id] = routingControl;
+            }
           }
         }
-      }
-    });
+      });
+    } catch (error) {
+      throw new Error('error');
+    }
+
+    
 
     const allWaypoints = Object.values(routingControlsRef.current).flatMap(
       (control) => control.getWaypoints().map((wp) => wp.latLng)
