@@ -2,11 +2,8 @@
 
 import { useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import {
-  CreateAccount,
-  CreateAccountRequest,
-  mapToCreateAccountRequest,
-} from '@/service/accountService';
+import { CreateAccount, CreateAccountRequest } from '@/service/accountService';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 const AccountModal = dynamic(() => import('./AccountModal'), {
   ssr: false,
@@ -15,15 +12,19 @@ const AccountModal = dynamic(() => import('./AccountModal'), {
 interface AccountModalWrapperProps {
   onAccountCreated: () => void;
   rolesList: RoleDTO[];
+  permission: string[];
 }
 
 export default function AccountModalWrapper({
   onAccountCreated,
   rolesList,
+  permission,
 }: AccountModalWrapperProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [key, setKey] = useState(0);
   const hasUnsavedChanges = useRef(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleOpen = () => setIsOpen(true);
 
@@ -43,13 +44,24 @@ export default function AccountModalWrapper({
 
   const handleSubmit = async (data: CreateAccountRequest) => {
     hasUnsavedChanges.current = false;
-    const result = await CreateAccount(data);
-    handleClose();
-    onAccountCreated();
+    try {
+      const result = await CreateAccount(data);
+      handleClose();
+      onAccountCreated();
+      setSnackbarMessage('Account created successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage('Failed to create account. Please try again.');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleChange = () => {
     hasUnsavedChanges.current = true;
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -68,6 +80,12 @@ export default function AccountModalWrapper({
         onSubmit={handleSubmit}
         onChange={handleChange}
         roles={rolesList}
+        userPermissions={permission}
+      />
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
       />
     </>
   );

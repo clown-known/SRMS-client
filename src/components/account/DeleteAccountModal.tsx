@@ -6,6 +6,8 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
+import CancelButton from '../CancelButton';
+import SubmitButton from '../SubmitButton';
 
 interface DeleteAccountModalProps {
   open: boolean;
@@ -40,21 +42,13 @@ export default function DeleteAccountModal({
         </DialogContentText>
       </DialogContent>
       <DialogActions className="pt-6">
-        <Button
-          onClick={onClose}
-          color="primary"
-          className="px-6 py-2 text-base"
-        >
-          Cancel
-        </Button>
-        <Button
+        <CancelButton onClick={onClose} />
+        <SubmitButton
+          colorClasses="bg-red-600 hover:bg-red-700 focus:ring-red-300 disabled:bg-red-300"
           onClick={onConfirm}
-          color="error"
-          variant="contained"
-          className="px-6 py-2 text-base"
         >
           Delete Account
-        </Button>
+        </SubmitButton>
       </DialogActions>
     </Dialog>
   );

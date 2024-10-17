@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { CreateRole, mapToCreateRoleRequest } from '@/service/roleService';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 const RoleModal = dynamic(() => import('./RoleModal'), {
   ssr: false,
@@ -36,6 +37,8 @@ function ClientWrapper({
   const [isOpen, setIsOpen] = useState(false);
   const [key, setKey] = useState(0);
   const hasUnsavedChanges = useRef(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleOpen = () => setIsOpen(true);
 
@@ -54,16 +57,28 @@ function ClientWrapper({
   }, []);
 
   const handleSubmit = async (data: any) => {
-    // Implement submit logic here
     hasUnsavedChanges.current = false;
-
-    const result = await CreateRole(mapToCreateRoleRequest(data));
-    handleClose();
-    onRoleCreated();
+    try {
+      const result = await CreateRole(mapToCreateRoleRequest(data));
+      handleClose();
+      onRoleCreated();
+      setSnackbarMessage('Role created successfully!');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error creating role:', error);
+      setSnackbarMessage('Failed to create role. Please try again.');
+      setSnackbarOpen(true);
+    }
   };
+
   const handleChange = () => {
     hasUnsavedChanges.current = true;
   };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
+
   return (
     <>
       <button
@@ -80,6 +95,11 @@ function ClientWrapper({
         onSubmit={handleSubmit}
         onChange={handleChange}
         permissions={permissions}
+      />
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
       />
     </>
   );

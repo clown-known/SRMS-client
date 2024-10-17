@@ -6,6 +6,8 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
+import CancelButton from '../CancelButton';
+import SubmitButton from '../SubmitButton';
 
 interface ResetPasswordModalProps {
   open: boolean;
@@ -39,21 +41,16 @@ export default function ResetPasswordModal({
         </DialogContentText>
       </DialogContent>
       <DialogActions className="pt-6">
-        <Button
-          onClick={onClose}
-          color="primary"
-          className="px-6 py-2 text-base"
-        >
-          Cancel
-        </Button>
-        <Button
+        <CancelButton onClick={onClose} />
+        <SubmitButton onClick={onConfirm}>Reset Password</SubmitButton>
+        {/* <Button
           onClick={onConfirm}
           color="primary"
           variant="contained"
           className="px-6 py-2 text-base"
         >
           Reset Password
-        </Button>
+        </Button> */}
       </DialogActions>
     </Dialog>
   );
