@@ -6,33 +6,23 @@ import {
   Box,
   Button,
   Typography,
-  TextareaAutosize,
-  TextField,
-  Snackbar,
-  Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  List,
-  ListItemButton,
-  ListItemText,
-  DialogActions,
   IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CustomInput from '@/components/CustomInput';
 import dynamic from 'next/dynamic';
 import { calculateDistance } from '@/utils/distanceUtils';
 import SnackbarCustom from '@/components/Snackbar';
 import Loading from '@/components/Loading';
 import { calculateTime } from '@/utils/TimeUtils';
 import { debounceFetching } from '@/utils/debounceFetch';
-import MenuIcon from '@mui/icons-material/Menu';
 import CustomDrawer from '@/components/Drawer';
 import RouteForm from '@/components/route/RouteForm';
 import PointSelectionDialog from '@/components/route/PointSelection';
 import { routeService } from '@/service/routeService';
 import { pointService } from '@/service/pointService';
+import PointDetailsCard from '@/components/points/PointDetailCard';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -57,6 +47,8 @@ const RouteEdit = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false)
 
   const fetchPoints = async (search: string = '') => {
     try {
@@ -240,6 +232,16 @@ const RouteEdit = () => {
     setSnackbarOpen(false);
   };
 
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
+  };
+
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
@@ -248,27 +250,44 @@ const RouteEdit = () => {
             routes={[route]}
             singleRouteMode={true}
             center={[route.startPoint.latitude, route.startPoint.longitude]}
-            
+            onPointClick={handlePointClick}
           />
         ) : (
           <Loading />
         )}
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 20,
+              left: openDrawer ? 430 : 50,
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
+          >
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
       <IconButton
-        onClick={() => setOpenDrawer(true)}
+        onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
           position: 'absolute',
-          top: 150,
-          left: 9,
+          top: '50%',
+          left: openDrawer ? 397 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 35,
-          height: 35,
+          width: 20,
+          height: 50,
+          borderRadius: 1,
+          transform: 'translateY(-50%)',
+          transition: 'left 0.3s ease-in-out',
         }}
       >
-        <MenuIcon />
+        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
+
       <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
         <Box>
           <Box className="mb-6 flex items-center">

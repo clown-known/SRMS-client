@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, IconButton } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import MenuIcon from '@mui/icons-material/Menu';
 import { routeService } from '@/service/routeService';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import RoutesDrawer from '@/components/route/RoutesDrawer';

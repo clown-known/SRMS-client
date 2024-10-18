@@ -17,7 +17,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
 import CustomInput from '@/components/CustomInput';
 import SnackbarCustom from '@/components/Snackbar';
-import MenuIcon from '@mui/icons-material/Menu';
 import CustomDrawer from '@/components/Drawer';
 import { pointService } from '@/service/pointService';
 import PointDetailsCard from '@/components/points/PointDetailCard';
@@ -35,7 +34,7 @@ const CreatePoint = () => {
   const [description, setDescription] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [openDrawer, setOpenDrawer] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
   const [isCardVisible, setIsCardVisible] = useState(false);
 
@@ -91,7 +90,7 @@ const CreatePoint = () => {
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
-        <Map moveToCurrentLocation={true} onMapClick={onMapClick} />
+        <Map moveToCurrentLocation={true} onMapClick={onMapClick} onPointClick={handlePointClick} />
         {isCardVisible && selectedPoint && (
           <Box
             sx={{
@@ -106,21 +105,6 @@ const CreatePoint = () => {
           </Box>
         )}
       </Box>
-      <IconButton
-        onClick={() => setOpenDrawer(true)}
-        sx={{
-          position: 'absolute',
-          top: 150,
-          left: 9,
-          zIndex: 1000,
-          backgroundColor: 'white',
-          border: '1px solid black',
-          width: 35,
-          height: 35,
-        }}
-      >
-        <MenuIcon />
-      </IconButton>
       <IconButton
         onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
@@ -205,6 +189,7 @@ const CreatePoint = () => {
             </Typography>
             <TextareaAutosize
               minRows={3}
+              maxRows={7}
               placeholder="Enter description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}

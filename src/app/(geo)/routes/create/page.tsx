@@ -33,6 +33,9 @@ import PointSelectionDialog from '@/components/route/PointSelection';
 import RouteForm from '@/components/route/RouteForm';
 import { pointService } from '@/service/pointService';
 import { CreateRouteDTO, routeService } from '@/service/routeService';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import PointDetailsCard from '@/components/points/PointDetailCard';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -56,6 +59,8 @@ const RouteCreate = () => {
   const [distance, setDistance] = useState<number | string>('');
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   const fetchPoints = async (search: string = '') => {
     try {
@@ -117,9 +122,8 @@ const RouteCreate = () => {
   const handleSelectPoint = useCallback(
     (point: PointDTO) => {
       if (dialogType === 'start') {
-        setStartPointId(point.id); // Lưu ID của điểm bắt đầu
-        setStartPointName(point.name); // Lưu tên của điểm bắt đầu
-        // Tính toán khoảng cách và thời gian nếu đã có điểm kết thúc
+        setStartPointId(point.id);
+        setStartPointName(point.name);
         if (endPointId) {
           const endPoint = points.find((p) => p.id === endPointId);
           if (endPoint) {
@@ -158,7 +162,6 @@ const RouteCreate = () => {
     },
     [dialogType, endPointId, points, startPointId, updateRouteOnMap]
   );
-  
 
   const handleCreateRoute = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -200,25 +203,52 @@ const RouteCreate = () => {
     return <Typography color="error">{error}</Typography>;
   }
 
+  const handlePointClick = (point: PointDTO) => {
+    setSelectedPoint(point);
+    setIsCardVisible(true);
+  };
+
+  const handleCloseCard = () => {
+    setIsCardVisible(false);
+    setSelectedPoint(null);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
-        <Map singleRouteMode={true} moveToCurrentLocation={true} />
+        <Map singleRouteMode={true} moveToCurrentLocation={true} 
+        onPointClick={handlePointClick} />
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 20,
+              left: openDrawer ? 430 : 50,
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
+          >
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
       <IconButton
-        onClick={() => setOpenDrawer(true)}
+        onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
           position: 'absolute',
-          top: 150,
-          left: 9,
+          top: '50%',
+          left: openDrawer ? 397 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 35,
-          height: 35,
+          width: 20,
+          height: 50,
+          borderRadius: 1,
+          transform: 'translateY(-50%)',
+          transition: 'left 0.3s ease-in-out',
         }}
       >
-        <MenuIcon />
+        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
       <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
         <Box>

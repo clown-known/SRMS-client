@@ -19,7 +19,6 @@ import { useParams } from 'next/navigation';
 import CustomInput from '@/components/CustomInput';
 import SnackbarCustom from '@/components/Snackbar';
 import Loading from '@/components/Loading';
-import MenuIcon from '@mui/icons-material/Menu';
 import CustomDrawer from '@/components/Drawer';
 import { pointService } from '@/service/pointService';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -40,7 +39,7 @@ const PointEdit = () => {
   const [error, setError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [openDrawer, setOpenDrawer] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
   const [isCardVisible, setIsCardVisible] = useState(false);
 
@@ -241,6 +240,7 @@ const PointEdit = () => {
             </Typography>
             <TextareaAutosize
               minRows={3}
+              maxRows={7}
               placeholder="Enter description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
