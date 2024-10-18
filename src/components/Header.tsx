@@ -6,14 +6,13 @@ import headerNavLinks from '@/data/headerNavLinks';
 import MobileNav from './MobileNav';
 import UserProfileDropdown from './UserDropdown';
 import Welcome from './Welcome';
+import { relative } from 'path';
 
 const Header = () => {
   return (
-    <header className="left-0 top-0 z-50 w-full bg-gray-800 text-white shadow-lg">
+    <header className="left-0 top-0 w-full bg-gray-800 text-white shadow-lg">
       {' '}
-      {/* Added fixed positioning */}
       <div className="container mx-auto flex items-center justify-between p-4">
-        {/* Project Name on the left */}
 
         <h1 className="text-2xl font-bold">
           <Link href="/">

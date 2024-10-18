@@ -97,10 +97,11 @@ const Points = () => {
     try {
       await pointService.deletePoint(selectedPointId);
 
-      fetchPoints(page, searchTerm);
-      handleCloseDialog();
+      router.refresh();
     } catch (err: any) {
       setError(err.message || 'Failed to delete point');
+    } finally {
+      handleCloseDialog();
     }
   };
 
@@ -129,10 +130,6 @@ const Points = () => {
     setSelectedPoint(null);
   };
 
-  const handleEditPoint = (id: string) => {
-    router.push(`/points/${id}/edit`);
-  };
-
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1, position: 'relative' }}>
@@ -141,7 +138,7 @@ const Points = () => {
           <Box
             sx={{
               position: 'absolute',
-              top: 80,
+              top: 20,
               left: openDrawer ? 430 : 50,
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
@@ -184,9 +181,9 @@ const Points = () => {
             <IconButton
               onClick={() => router.push('/points/create')}
               sx={{
-                backgroundColor: 'black',
+                backgroundColor: 'darkgreen',
                 color: 'white',
-                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' },
+                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
               }}
               size="small"
             >
@@ -201,6 +198,7 @@ const Points = () => {
             error={error}
             capitalizeString={capitalizeString}
             handleOpenDialog={handleOpenDialog}
+            handlePointClick={handlePointClick}
           />
 
           <Box className="mt-3 flex justify-center">
@@ -218,8 +216,6 @@ const Points = () => {
             onConfirm={handleDelete}
             title="Delete Confirmation"
             content="Are you sure you want to delete this point permanently?"
-            cancelText="No"
-            confirmText="Yes"
           />
         </Box>
       </CustomDrawer>

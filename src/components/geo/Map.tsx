@@ -99,7 +99,6 @@ const MapContent = ({
 
     const handleMapReady = () => {
       try {
-        
         if (moveToCurrentLocation) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -169,41 +168,39 @@ const MapContent = ({
     if (onPointClick) {
       onPointClick(point);
     }
-  
+
     const fixedZoomLevel = 8;
-  
+
     const newCenter: [number, number] = [point.latitude, point.longitude];
-  
+
     map.setView(newCenter, fixedZoomLevel, {
       animate: true,
-      duration: 0.5,
+      duration: 1,
     });
-  
+
     setTimeout(() => {
       const mapWidth = map.getSize().x;
-  
+
       const horizontalOffset = -mapWidth * 0.31;
 
       const verticalOffset = mapWidth * 0.1;
-  
+
       const pointPixel = map.latLngToContainerPoint(newCenter);
-  
+
       const adjustedCenter = map.containerPointToLatLng([
         pointPixel.x + horizontalOffset,
         pointPixel.y + verticalOffset,
       ]);
-  
+
       map.flyTo(adjustedCenter, fixedZoomLevel, {
         animate: true,
-        duration: 0.6,
+        duration: 1,
       });
     }, 600);
   };
-  
 
   useEffect(() => {
     if (!map || !routes || isLoading) return;
-
 
     try {
       Object.keys(routingControlsRef.current).forEach((routeId) => {
@@ -233,7 +230,7 @@ const MapContent = ({
               : []),
             L.latLng(route.endPoint.latitude, route.endPoint.longitude),
           ];
-  
+
           if (routingControlsRef.current[route.id]) {
             routingControlsRef.current[route.id].setWaypoints(waypoints);
           } else {
@@ -256,7 +253,7 @@ const MapContent = ({
               show: false,
               createMarker: () => null,
             } as any);
-  
+
             if (mapRef.current) {
               routingControl.addTo(mapRef.current);
               routingControlsRef.current[route.id] = routingControl;
@@ -267,8 +264,6 @@ const MapContent = ({
     } catch (error) {
       throw new Error('error');
     }
-
-    
 
     const allWaypoints = Object.values(routingControlsRef.current).flatMap(
       (control) => control.getWaypoints().map((wp) => wp.latLng)

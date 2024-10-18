@@ -13,4 +13,11 @@
 body {
   font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  padding-top: 64px;
 }
+
+header{
+  position: fixed;
+  z-index: 1100;
+}
+

@@ -20,6 +20,9 @@ import SnackbarCustom from '@/components/Snackbar';
 import MenuIcon from '@mui/icons-material/Menu';
 import CustomDrawer from '@/components/Drawer';
 import { pointService } from '@/service/pointService';
+import PointDetailsCard from '@/components/points/PointDetailCard';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -89,6 +92,19 @@ const CreatePoint = () => {
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
         <Map moveToCurrentLocation={true} onMapClick={onMapClick} />
+        {isCardVisible && selectedPoint && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 20,
+              left: openDrawer ? 430 : 50,
+              zIndex: 1000,
+              transition: 'left 0.3s ease-in-out',
+            }}
+          >
+            <PointDetailsCard point={selectedPoint} onClose={handleCloseCard} />
+          </Box>
+        )}
       </Box>
       <IconButton
         onClick={() => setOpenDrawer(true)}
@@ -104,6 +120,24 @@ const CreatePoint = () => {
         }}
       >
         <MenuIcon />
+      </IconButton>
+      <IconButton
+        onClick={() => setOpenDrawer(!openDrawer)}
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: openDrawer ? 397 : -3,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          border: '1px solid black',
+          width: 20,
+          height: 50,
+          borderRadius: 1,
+          transform: 'translateY(-50%)',
+          transition: 'left 0.3s ease-in-out',
+        }}
+      >
+        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
       <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
         <Box>
