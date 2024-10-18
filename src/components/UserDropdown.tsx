@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { IconButton } from '@mui/material';
 import { useAppDispatch } from '@/store/store';
 import { logoutState } from '@/store/userSlice';
 import { Logout } from '@/service/authService';
@@ -49,8 +51,9 @@ const UserProfileDropdown = (props: IProps) => {
         onClick={toggleDropdown}
         className="flex items-center"
       >
-        Wellcome
-        <span className="ml-2">{name}</span>
+        <span className="m-2">{name} </span>
+
+        <AccountCircleIcon />
       </button>
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg">

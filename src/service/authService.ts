@@ -134,4 +134,12 @@ export const Logout = async () =>{
   Cookies.remove('token');
   Cookies.remove('refreshToken');
 }
+interface ChangePasswordRequest{
+  oldPassword: string;
+  newPassword: string;
+}
+export const changePassword = async(data: ChangePasswordRequest) =>{
+    const response = await axiosInstance.put<UpdateProfileResponse>(`authentication-service/account/changePassword`,data);
+    return response;
+}
 

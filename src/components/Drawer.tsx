@@ -10,7 +10,13 @@ interface ResizableDrawerProps {
   maxWidth?: number;
 }
 
-const CustomDrawer = ({ open, onClose, children, width, maxWidth = 700 }: ResizableDrawerProps) => {
+const CustomDrawer = ({
+  open,
+  onClose,
+  children,
+  width,
+  maxWidth = 700,
+}: ResizableDrawerProps) => {
   const [drawerWidth, setDrawerWidth] = useState(width || 400); // Default width
 
   // const handleMouseDown = (e: React.MouseEvent) => {
@@ -20,8 +26,8 @@ const CustomDrawer = ({ open, onClose, children, width, maxWidth = 700 }: Resiza
   // };
 
   // const handleMouseMove = (e: MouseEvent) => {
-  //   const newWidth = e.clientX > 200 ? e.clientX : 400; 
-  //   setDrawerWidth(newWidth > maxWidth ? maxWidth : newWidth); 
+  //   const newWidth = e.clientX > 200 ? e.clientX : 400;
+  //   setDrawerWidth(newWidth > maxWidth ? maxWidth : newWidth);
   // };
 
   // const handleMouseUp = () => {
@@ -55,7 +61,7 @@ const CustomDrawer = ({ open, onClose, children, width, maxWidth = 700 }: Resiza
           right: 0,
           zIndex: 1000,
           backgroundColor: 'transparent',
-          border: '0px', 
+          border: '0px',
         }}
       /> */}
     </Drawer>

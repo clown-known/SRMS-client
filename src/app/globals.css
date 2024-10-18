@@ -15,9 +15,23 @@ body {
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   padding-top: 64px;
 }
-
 header{
   position: fixed;
   z-index: 1100;
 }
-
+.slick-prev,
+.slick-next {
+  z-index: 1;
+}
+.slick-prev {
+  left: 10px;
+}
+.slick-next {
+  right: 10px;
+}
+.slick-dots {
+  bottom: 20px;
+}
+.slick-dots li button:before {
+  color: white;
+}
