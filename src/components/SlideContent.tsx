@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { ArrowBack, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { IconButton } from '@mui/material';
 // import { ArrowRightIcon } from '@heroicons/react/24/solid';
 // import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -65,6 +66,8 @@ const CustomArrow = ({ className, style, onClick, icon }: any) => (
 );
 
 const HomeSlider: React.FC = () => {
+  const sliderRef = useRef<Slider>(null);
+
   const settings = {
     dots: true,
     infinite: true,
@@ -75,6 +78,7 @@ const HomeSlider: React.FC = () => {
     autoplaySpeed: 5000,
     fade: true,
     cssEase: 'linear',
+    arrows: false, // Disable default arrows
     nextArrow: (
       <CustomArrow icon={<ChevronRight className="h-8 w-8 text-white" />} />
     ),
@@ -109,14 +113,36 @@ const HomeSlider: React.FC = () => {
     // Add more slide objects here...
   ];
 
+  const goToNext = () => {
+    sliderRef.current?.slickNext();
+  };
+
+  const goToPrev = () => {
+    sliderRef.current?.slickPrev();
+  };
+
   return (
-    <div className="relative h-screen">
-      <Slider {...settings}>
+    <div className="relative h-screen overflow-hidden">
+      <Slider ref={sliderRef} {...settings}>
         {slides.map((slide, index) => (
           // eslint-disable-next-line react/no-array-index-key
           <SlideContent key={index} {...slide} />
         ))}
       </Slider>
+      <IconButton
+        onClick={goToPrev}
+        className="absolute left-4 top-1/2 z-10 -translate-y-1/2 transform"
+        sx={{ color: 'white', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      >
+        <ChevronLeft />
+      </IconButton>
+      <IconButton
+        onClick={goToNext}
+        className="absolute right-4 top-1/2 z-10 -translate-y-1/2 transform"
+        sx={{ color: 'white', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      >
+        <ChevronRight />
+      </IconButton>
     </div>
   );
 };
