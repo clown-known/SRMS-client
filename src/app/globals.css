@@ -14,3 +14,19 @@ body {
   font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
+.slick-prev,
+.slick-next {
+  z-index: 1;
+}
+.slick-prev {
+  left: 10px;
+}
+.slick-next {
+  right: 10px;
+}
+.slick-dots {
+  bottom: 20px;
+}
+.slick-dots li button:before {
+  color: white;
+}

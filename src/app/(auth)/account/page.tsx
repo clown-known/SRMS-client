@@ -5,6 +5,8 @@ import useSWR from 'swr';
 import axiosInstance from '../../../../axiosConfig';
 import Loading from '@/components/Loading';
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
+import { changePassword } from '@/service/authService';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 interface AccountDTOResponse {
   data: AccountDTO;
@@ -12,6 +14,10 @@ interface AccountDTOResponse {
 
 const Account: FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+  });
 
   const fetcher = (url: string) => axiosInstance.get<AccountDTOResponse>(url);
 
@@ -33,19 +39,33 @@ const Account: FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleSubmitPasswordChange = (
+  const showSnackbar = (message: string) => {
+    setSnackbar({ open: true, message });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleSubmitPasswordChange = async (
     oldPassword: string,
     newPassword: string,
     confirmPassword: string
   ) => {
-    // Implement password change logic here
-    console.log('Password change submitted', {
-      oldPassword,
-      newPassword,
-      confirmPassword,
-    });
-    // Close modal after submission
-    setIsModalOpen(false);
+    if (newPassword !== confirmPassword) {
+      showSnackbar('New password and confirm password do not match');
+      return;
+    }
+
+    try {
+      if (data) {
+        await changePassword({ newPassword, oldPassword });
+        showSnackbar('Password changed successfully');
+        setIsModalOpen(false);
+      }
+    } catch (error) {
+      showSnackbar('Failed to change password. Please try again.');
+    }
   };
 
   if (isLoading || isValidating) return <Loading />;
@@ -81,6 +101,12 @@ const Account: FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleSubmitPasswordChange}
+      />
+
+      <CustomSnackbar
+        open={snackbar.open}
+        message={snackbar.message}
+        onClose={handleCloseSnackbar}
       />
     </div>
   );
