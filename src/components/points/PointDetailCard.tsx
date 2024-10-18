@@ -2,10 +2,10 @@ import React from 'react';
 import {
   Box,
   Typography,
-  Button,
   IconButton,
   CardActionArea,
   CardMedia,
+  Button,
 } from '@mui/material';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -13,18 +13,11 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface PointDetailsCardProps {
-  point: {
-    id: string;
-    name: string;
-    type: string;
-    latitude: number;
-    longitude: number;
-    description: string;
-  } | null;
+  point: PointDTO;
   onClose: () => void;
 }
 
-const PointDetailsCard = ({ point, onClose  }: PointDetailsCardProps) => {
+const PointDetailsCard = ({ point, onClose }: PointDetailsCardProps) => {
   if (!point) return null;
 
   const capitalizeString = (string: string) =>
@@ -40,8 +33,10 @@ const PointDetailsCard = ({ point, onClose  }: PointDetailsCardProps) => {
         backgroundColor: 'white',
       }}
     >
-      <Box className="mb-4 flex justify-between items-center">
-        <Typography variant="h5" className="font-bold">{point.name}</Typography>
+      <Box className="mb-4 flex items-center justify-between">
+        <Typography variant="h5" className="font-bold">
+          {point.name}
+        </Typography>
         <IconButton onClick={onClose}>
           <CloseIcon />
         </IconButton>
@@ -50,9 +45,9 @@ const PointDetailsCard = ({ point, onClose  }: PointDetailsCardProps) => {
         <CardActionArea>
           <CardMedia
             component="img"
-            image='/assets/images/no-image.png'
-            alt='No image'
-          />  
+            image="/assets/images/no-image.png"
+            alt="No image"
+          />
         </CardActionArea>
       </Box>
 

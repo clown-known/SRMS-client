@@ -9,7 +9,10 @@ import { routeService } from '@/service/routeService';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import RoutesDrawer from '@/components/route/RoutesDrawer';
 import CloseIcon from '@mui/icons-material/Close';
-import PointDetailsCard from '@/components/points/PointDetail';
+import PointDetailsCard from '@/components/points/PointDetailCard';
+
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -92,7 +95,7 @@ const Routes = () => {
       setIsLoading(true);
       try {
         await routeService.deleteRoute(routeToDelete);
-        fetchRoutes(page, searchTerm);
+        router.refresh();
       } catch (error) {
         console.error(error);
         setError('An error occurred while deleting the route');
@@ -140,8 +143,8 @@ const Routes = () => {
           <Box
             sx={{
               position: 'absolute',
-              top: openRoutesDialog ? 150 : 20,
-              left: openRoutesDialog ? 740 : 50, 
+              top: openRoutesDialog ? 70 : 20,
+              left: openRoutesDialog ? 750 : 50, 
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
             }}
@@ -151,20 +154,24 @@ const Routes = () => {
         )}
       </Box>
       <IconButton
-        onClick={() => setOpenRoutesDialog(true)}
+        onClick={() => setOpenRoutesDialog(!openRoutesDialog)}
         sx={{
           position: 'absolute',
-          top: 150,
-          left: 9,
+          top: '50%',
+          left: openRoutesDialog ? 727 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 35,
-          height: 35,
+          width: 20,
+          height: 50,
+          borderRadius: 1,
+          transform: 'translateY(-50%)',
+          transition: 'left 0.3s ease-in-out',
         }}
       >
-        <MenuIcon />
+        {openRoutesDialog ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
+
 
       <RoutesDrawer
         open={openRoutesDialog}
@@ -189,8 +196,6 @@ const Routes = () => {
         onConfirm={handleConfirmDelete}
         title="Confirm Delete"
         content="Are you sure you want to delete this route permanently?"
-        cancelText="Cancel"
-        confirmText="Yes"
       />
     </Box>
   );

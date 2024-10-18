@@ -9,12 +9,12 @@ interface CustomSnackbarProps {
   autoHideDuration?: number;
 }
 
-const CustomSnackbar: React.FC<CustomSnackbarProps> = ({
+const CustomSnackbar = ({
   open,
   message,
   onClose,
   autoHideDuration = 3000,
-}) => {
+}: CustomSnackbarProps) => {
   return (
     <Snackbar
       open={open}

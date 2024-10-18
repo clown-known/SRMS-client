@@ -3,34 +3,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Pagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { Box, Button, Typography, IconButton, Tooltip } from '@mui/material';
 import AnchorIcon from '@mui/icons-material/Anchor';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PaginationCustom from '@/components/Pagination';
-import MenuIcon from '@mui/icons-material/Menu';
 import CustomDrawer from '@/components/Drawer';
-import SearchIcon from '@mui/icons-material/Search';
 import Loading from '@/components/Loading';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import { pointService } from '@/service/pointService';
-import PointDetailsCard from '@/components/points/PointDetail';
+import PointDetailsCard from '@/components/points/PointDetailCard';
 import SearchInput from '@/components/geo/SearchInput';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import PointsList from '@/components/points/PointList';
 
 // Load the map component
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
@@ -111,10 +97,11 @@ const Points = () => {
     try {
       await pointService.deletePoint(selectedPointId);
 
-      fetchPoints(page, searchTerm);
-      handleCloseDialog();
+      router.refresh();
     } catch (err: any) {
       setError(err.message || 'Failed to delete point');
+    } finally {
+      handleCloseDialog();
     }
   };
 
@@ -143,10 +130,6 @@ const Points = () => {
     setSelectedPoint(null);
   };
 
-  const handleEditPoint = (id: string) => {
-    router.push(`/points/${id}/edit`);
-  };
-
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1, position: 'relative' }}>
@@ -156,7 +139,7 @@ const Points = () => {
             sx={{
               position: 'absolute',
               top: 20,
-              left: openDrawer ? '28%' : 50,
+              left: openDrawer ? 430 : 50,
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
             }}
@@ -169,13 +152,13 @@ const Points = () => {
         onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
           position: 'absolute',
-          top: '50%', 
-          left: openDrawer ? 397 : -3, 
+          top: '50%',
+          left: openDrawer ? 397 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 20, 
-          height: 50, 
+          width: 20,
+          height: 50,
           borderRadius: 1,
           transform: 'translateY(-50%)',
           transition: 'left 0.3s ease-in-out',
@@ -198,9 +181,9 @@ const Points = () => {
             <IconButton
               onClick={() => router.push('/points/create')}
               sx={{
-                backgroundColor: 'black',
+                backgroundColor: 'darkgreen',
                 color: 'white',
-                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' },
+                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
               }}
               size="small"
             >
@@ -209,53 +192,14 @@ const Points = () => {
               </Tooltip>
             </IconButton>
           </Box>
-          <Box className="mt-6">
-            {isLoading && <Loading />}
-            {error && <Typography color="error">{error}</Typography>}
-            {!isLoading && !error && points.length === 0 && (
-              <Typography>No points available</Typography>
-            )}
-
-            {!isLoading &&
-              !error &&
-              points.length > 0 &&
-              points.map((point) => (
-                <Box
-                  key={point.id}
-                  className="mt-1 rounded-lg bg-white p-3 shadow-md"
-                >
-                  <Box className="mb-2 flex items-center">
-                    <Typography variant="h6" className="ml-2">
-                      {point.name}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2">
-                    <AnchorIcon color="primary" />{' '}
-                    {capitalizeString(point.type)}
-                  </Typography>
-                  <Typography variant="body2">
-                    <LocationOnIcon /> {point.latitude.toFixed(3)},{' '}
-                    {point.longitude.toFixed(3)}
-                  </Typography>
-                  <Box className="mt-2">
-                    <Button
-                      variant="contained"
-                      onClick={() => router.push(`/points/${point.id}`)}
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="error"
-                      sx={{ ml: 2 }}
-                      onClick={() => handleOpenDialog(point.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Box>
-                </Box>
-              ))}
-          </Box>
+          <PointsList
+            points={points}
+            isLoading={isLoading}
+            error={error}
+            capitalizeString={capitalizeString}
+            handleOpenDialog={handleOpenDialog}
+            handlePointClick={handlePointClick}
+          />
 
           <Box className="mt-3 flex justify-center">
             <PaginationCustom
@@ -272,8 +216,6 @@ const Points = () => {
             onConfirm={handleDelete}
             title="Delete Confirmation"
             content="Are you sure you want to delete this point permanently?"
-            cancelText="No"
-            confirmText="Yes"
           />
         </Box>
       </CustomDrawer>

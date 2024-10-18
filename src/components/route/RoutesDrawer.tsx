@@ -70,9 +70,6 @@ const RoutesDrawer = ({
 
   return (
     <CustomDrawer open={open} onClose={onClose} width={730} maxWidth={730}>
-      <Typography variant="h5" mb={2}>
-        Shipping Routes
-      </Typography>
       <Box className="mb-4 mt-2 flex items-center justify-between">
         <Box className="mr-40 flex-grow">
           <SearchInput
@@ -85,9 +82,9 @@ const RoutesDrawer = ({
         <IconButton
           onClick={() => router.push('/routes/create')}
           sx={{
-            backgroundColor: 'black',
+            backgroundColor: 'darkgreen',
             color: 'white',
-            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' },
+            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
           }}
           size='small'
         >
@@ -98,7 +95,7 @@ const RoutesDrawer = ({
       </Box>
       <Box
         className="mt-5"
-        sx={{ height: 'calc(100% - 210px)', overflow: 'auto' }}
+        sx={{ height: '520px', overflow: 'auto' }}
       >
         {isLoading && <Loading />}
         {!isLoading && error && <Typography color="error">{error}</Typography>}
@@ -177,7 +174,7 @@ const RoutesDrawer = ({
           <Typography>Cannot find any route on this page!</Typography>
         )}
       </Box>
-      <Box className="mt-2 flex justify-center">
+      <Box className="mt-1 flex justify-center">
         <PaginationCustom
           totalPages={totalPages}
           currentPage={currentPage}

@@ -41,9 +41,9 @@ const CustomDrawer = ({
       open={open}
       onClose={onClose}
       variant="persistent"
-      PaperProps={{ style: { width: drawerWidth } }}
+      PaperProps={{ style: { width: drawerWidth, marginTop: 64, height: 'calc(100% - 64px)' } }}
     >
-      <Box sx={{ p: 2, height: '100%' }}>
+      <Box sx={{ p: 2,  }}>
         {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <IconButton onClick={onClose}>
             <CloseIcon />
@@ -51,11 +51,11 @@ const CustomDrawer = ({
         </Box> */}
         {children}
       </Box>
-      <div
+      {/* <div
         // onMouseDown={handleMouseDown}
         style={{
           width: '5px',
-          height: '100%',
+          height: '80%',
           position: 'absolute',
           top: 0,
           right: 0,
@@ -63,7 +63,7 @@ const CustomDrawer = ({
           backgroundColor: 'transparent',
           border: '0px',
         }}
-      />
+      /> */}
     </Drawer>
   );
 };
