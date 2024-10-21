@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import Header from '@/components/Header';
 import { store } from '@/store/store';
 import ReduxProvider from '@/store/redux-provider';
+import Footer from '@/components/Footer';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -27,6 +28,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // get paht from url then get permission on each path
+  // call usePermissionCheck with param from above
+  // const path = 'account' => permisison= 'account'
+  //  usePermissionCheck(permisison);
   return (
     <html lang="en">
       <body

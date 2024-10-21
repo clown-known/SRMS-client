@@ -5,8 +5,6 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { ArrowBack, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { IconButton } from '@mui/material';
-// import { ArrowRightIcon } from '@heroicons/react/24/solid';
-// import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface SlideProps {
   title: string;
@@ -20,39 +18,43 @@ const SlideContent: React.FC<SlideProps> = ({
   subtitle,
   description,
   imageUrl,
-}) => (
-  <div className="flex h-screen bg-gray-900 text-white">
-    <motion.div
-      initial={{ opacity: 0, x: -50 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5 }}
-      className="flex w-1/2 items-center justify-center p-8"
-    >
-      <img
-        src={imageUrl}
-        alt={title}
-        className="max-h-full max-w-full object-contain"
-      />
-    </motion.div>
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="flex w-1/2 flex-col justify-center p-8"
-    >
-      <h2 className="mb-3 text-4xl font-bold">{title}</h2>
-      <h3 className="mb-4 text-2xl text-yellow-500">{subtitle}</h3>
-      <p className="mb-6 text-base">{description}</p>
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="flex w-max items-center rounded-full bg-gray-800 px-6 py-2 text-sm text-white transition-colors hover:bg-gray-700"
+}) => {
+  return (
+    <div className="flex h-screen bg-gray-900 text-white">
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -50 }} // Move out to the left
+        transition={{ duration: 0.5 }}
+        className="flex w-1/2 items-center justify-center p-8"
       >
-        LEARN MORE <ArrowBack className="ml-2 h-4 w-4" />
-      </motion.button>
-    </motion.div>
-  </div>
-);
+        <img
+          src={imageUrl}
+          alt={title}
+          className="max-h-full max-w-full object-contain"
+        />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, x: 50 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 50 }} // Move out to the right
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="flex w-1/2 flex-col justify-center p-8"
+      >
+        <h2 className="mb-3 text-4xl font-bold">{title}</h2>
+        <h3 className="mb-4 text-2xl text-yellow-500">{subtitle}</h3>
+        <p className="mb-6 text-base">{description}</p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex w-max items-center rounded-full bg-gray-800 px-6 py-2 text-sm text-white transition-colors hover:bg-gray-700"
+        >
+          LEARN MORE <ArrowBack className="ml-2 h-4 w-4" />
+        </motion.button>
+      </motion.div>
+    </div>
+  );
+};
 
 const CustomArrow = ({ className, style, onClick, icon }: any) => (
   // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions

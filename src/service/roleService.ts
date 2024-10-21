@@ -2,14 +2,14 @@ import axiosInstance from "../../axiosConfig";
 
 export interface RolesPage{
   data: RoleDTO[];
-      meta: {
-        page: number;
-        take: number;
-        itemCount: number;
-        pageCount: number;
-        hasPreviousPage: boolean;
-        hasNextPage: boolean;
-      };
+  meta: {
+    page: number;
+    take: number;
+    itemCount: number;
+    pageCount: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+  };
 }
 
 export interface RoleResponse {
@@ -54,21 +54,36 @@ export function mapToCreateRoleRequest(data: { name: string; permissions: string
   };
 }
 export async function getRoles(page: number = 1, take: number = 10): Promise<RolesPage> {
-  const response = await axiosInstance.get<RoleResponse>('authentication-service/role', {
-    params: { page, take }
-  });
-  return response.data.data;
+  try {
+    const response = await axiosInstance.get<RoleResponse>('authentication-service/role', {
+      params: { page, take }
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+    throw error; // Rethrow the error for further handling if needed
+  }
 }
 
 export async function searchRoles(searchKey: string, page: number = 1, take: number = 10): Promise<RolesPage> {
-  const response = await axiosInstance.get<RoleResponse>('authentication-service/role', {
-    params: { searchKey, page, take }
-  });
-  return response.data.data;
+  try {
+    const response = await axiosInstance.get<RoleResponse>('authentication-service/role', {
+      params: { searchKey, page, take }
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error searching roles:", error);
+    throw error; // Rethrow the error for further handling if needed
+  }
 }
 export async function getPermission(): Promise<PermissionResponse> {
-  const response = await axiosInstance.get<PermissionResponse>('authentication-service/permission');
-  return response.data;
+  try {
+    const response = await axiosInstance.get<PermissionResponse>('authentication-service/permission');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching permissions:", error);
+    throw error; // Rethrow the error for further handling if needed
+  }
 }
 export async function CreateRole(data: CreateRoleRequest): Promise<PermissionResponse> {
   const response = await axiosInstance.post<PermissionResponse>('authentication-service/role/create',data);

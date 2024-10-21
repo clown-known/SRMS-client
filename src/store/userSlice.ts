@@ -18,6 +18,7 @@ export const fetchUserPermissions = createAsyncThunk(
   async () => {
     try{
       const response = await axiosGetMeInstance.get('authentication-service/auth/get-me'); // Replace with actual API path
+      // console.log(response)
       return response.data.data;
     }catch(err){
       return initialState;

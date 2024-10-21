@@ -1,12 +1,12 @@
 'use client';
 
 import { FC, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { login } from '@/service/authService';
 import { loginState } from '@/store/userSlice';
 import CustomSnackbar from '@/components/CustomSnackbar';
+import RandomBackground from '@/components/RandomBackground';
 
 const Login: FC = () => {
   const [email, setEmail] = useState('');
@@ -69,8 +69,8 @@ const Login: FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-lg bg-gray-200 p-8 shadow-lg">
+    <RandomBackground>
+      <div className="w-full max-w-md rounded-lg bg-gray-200 bg-opacity-80 p-8 shadow-lg">
         <h2 className="mb-6 text-center text-3xl font-semibold text-gray-800">
           Sign In
         </h2>
@@ -135,7 +135,7 @@ const Login: FC = () => {
         message={snackbarMessage}
         onClose={handleCloseSnackbar}
       />
-    </div>
+    </RandomBackground>
   );
 };
 

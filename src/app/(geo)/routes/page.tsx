@@ -5,14 +5,13 @@ import { Box, IconButton } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { routeService } from '@/service/routeService';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import RoutesDrawer from '@/components/route/RoutesDrawer';
-import CloseIcon from '@mui/icons-material/Close';
 import PointDetailsCard from '@/components/points/PointDetailCard';
-
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -134,7 +133,7 @@ const Routes = () => {
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
         <Map
-          moveToCurrentLocation={true}
+          moveToCurrentLocation
           routes={routes}
           selectedRoutes={selectedRoutes}
           onPointClick={handlePointClick}
@@ -144,7 +143,7 @@ const Routes = () => {
             sx={{
               position: 'absolute',
               top: openRoutesDialog ? 70 : 20,
-              left: openRoutesDialog ? 750 : 50, 
+              left: openRoutesDialog ? 750 : 50,
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
             }}
@@ -171,7 +170,6 @@ const Routes = () => {
       >
         {openRoutesDialog ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
-
 
       <RoutesDrawer
         open={openRoutesDialog}
