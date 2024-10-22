@@ -15,15 +15,15 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { useRouter } from 'next/navigation';
-import PaginationCustom from '@/components/Pagination';
-import Loading from '@/components/Loading';
-import CustomDrawer from '../Drawer';
-import SearchInput from '../geo/SearchInput';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { grey } from '@mui/material/colors';
+import PaginationCustom from '@/components/Pagination';
+import Loading from '@/components/Loading';
+import CustomDrawer from '../Drawer';
+import SearchInput from '../geo/SearchInput';
+import { useRouter } from 'next/navigation';
 
 interface RoutesDrawerProps {
   open: boolean;
@@ -39,9 +39,10 @@ interface RoutesDrawerProps {
   selectedRoutes: string[];
   totalPages: number;
   currentPage: number;
+  onAddNewRoute: () => void;
 }
 
-const RoutesDrawer = ({
+const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
   open,
   onClose,
   routes,
@@ -55,7 +56,8 @@ const RoutesDrawer = ({
   selectedRoutes,
   totalPages,
   currentPage,
-}: RoutesDrawerProps) => {
+  onAddNewRoute,
+}) => {
   const router = useRouter();
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -65,7 +67,7 @@ const RoutesDrawer = ({
   };
 
   const handleRowClick = (routeId: string) => {
-    handleCheckboxChange(routeId); 
+    handleCheckboxChange(routeId);
   };
 
   return (
@@ -80,31 +82,32 @@ const RoutesDrawer = ({
           />
         </Box>
         <IconButton
-          onClick={() => router.push('/routes/create')}
+          onClick={onAddNewRoute}
           sx={{
             backgroundColor: 'darkgreen',
             color: 'white',
             '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
           }}
-          size='small'
+          size="small"
         >
           <Tooltip title="Add new route" arrow>
-            <AddIcon fontSize='small' />
+            <AddIcon fontSize="small" />
           </Tooltip>
         </IconButton>
       </Box>
-      <Box
-        className="mt-5"
-        sx={{ height: '520px', overflow: 'auto' }}
-      >
+
+      <Box sx={{ height: '520px', overflow: 'auto' }}>
         {isLoading && <Loading />}
         {!isLoading && error && <Typography color="error">{error}</Typography>}
         {!isLoading && !error && routes.length > 0 && (
           <TableContainer component={Paper} sx={{ maxHeight: '100%' }}>
-            <Table stickyHeader  sx={{ minWidth: 650 }} size="small">
+            <Table stickyHeader sx={{ minWidth: 650 }} size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox" sx={{ width: '1%' }}></TableCell>
+                  <TableCell
+                    padding="checkbox"
+                    sx={{ width: '1%' }}
+                  ></TableCell>
                   <TableCell sx={{ width: '25%' }}>Name</TableCell>
                   <TableCell sx={{ width: '25%' }}>Start Point</TableCell>
                   <TableCell sx={{ width: '25%' }}>End Point</TableCell>
@@ -114,12 +117,12 @@ const RoutesDrawer = ({
               </TableHead>
               <TableBody>
                 {routes.map((route) => (
-                  <TableRow 
-                    key={route.id} 
-                    onClick={() => handleRowClick(route.id)} 
-                    sx={{ 
+                  <TableRow
+                    key={route.id}
+                    onClick={() => handleRowClick(route.id)}
+                    sx={{
                       '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.1)' },
-                      cursor: 'pointer'
+                      cursor: 'pointer',
                     }}
                     onDoubleClick={() => router.push(`/routes/${route.id}`)}
                   >
@@ -129,21 +132,35 @@ const RoutesDrawer = ({
                         checked={selectedRoutes.includes(route.id)}
                         onChange={() => handleCheckboxChange(route.id)}
                         icon={<VisibilityOffOutlinedIcon />}
-                        checkedIcon={<VisibilityIcon sx={{ color: grey[600] }} />}
+                        checkedIcon={
+                          <VisibilityIcon sx={{ color: grey[600] }} />
+                        }
                       />
                     </TableCell>
-                    <TableCell 
-                      sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    <TableCell
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
                     >
                       {route.name}
                     </TableCell>
-                    <TableCell 
-                      sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} 
+                    <TableCell
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
                     >
                       {route.startPoint?.name || 'N/A'}
                     </TableCell>
-                    <TableCell 
-                      sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    <TableCell
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
                     >
                       {route.endPoint?.name || 'N/A'}
                     </TableCell>
@@ -151,13 +168,20 @@ const RoutesDrawer = ({
                     <TableCell>
                       <Box display="flex" alignItems="center">
                         <IconButton
-                          onClick={() => router.push(`/routes/${route.id}/edit`)}
+                          onClick={() =>
+                            router.push(`/routes/${route.id}/edit`)
+                          }
                         >
                           <Tooltip title="Edit route" arrow>
                             <EditIcon />
                           </Tooltip>
                         </IconButton>
-                        <IconButton onClick={() => handleDeleteClick(route.id)}>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(route.id);
+                          }}
+                        >
                           <Tooltip title="Remove route" arrow>
                             <DeleteIcon />
                           </Tooltip>

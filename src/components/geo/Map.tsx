@@ -1,4 +1,12 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+'use client';
+
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
@@ -28,8 +36,50 @@ interface MapProps {
   onPointClick?: (point: PointDTO) => void;
 }
 
+const MAP_LAYERS = {
+  BASE: 'Base',
+  DARK: 'Dark',
+};
+
+const DEFAULT_CENTER: [number, number] = [0, 0];
+const DEFAULT_ZOOM = 8;
+
+const useMapLayer = () => {
+  const [selectedLayer, setSelectedLayer] = useState(() => 
+    localStorage.getItem('selectedMapLayer') || MAP_LAYERS.BASE
+  );
+
+  const updateLayer = useCallback((layer: string) => {
+    localStorage.setItem('selectedMapLayer', layer);
+    setSelectedLayer(layer);
+  }, []);
+
+  return { selectedLayer, updateLayer };
+};
+
+const LayerChangeTracker = ({ onLayerChange }: { onLayerChange: (layer: string) => void }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const handleLayerChange = (e: L.LayersControlEvent) => {
+      if (e.name === 'Base') {
+        onLayerChange(MAP_LAYERS.BASE);
+      } else if (e.name === 'Dark') {
+        onLayerChange(MAP_LAYERS.DARK);
+      }
+    };
+
+    map.on('baselayerchange', handleLayerChange);
+    return () => {
+      map.off('baselayerchange', handleLayerChange);
+    };
+  }, [map, onLayerChange]);
+
+  return null;
+};
+
 const MapContent = ({
-  center,
+  center = DEFAULT_CENTER,
   moveToCurrentLocation,
   onMapClick,
   selectedRoutes,
@@ -37,38 +87,38 @@ const MapContent = ({
   singleRouteMode,
   onPointClick,
 }: MapProps) => {
-  const [redIcon, setRedIcon] = useState<L.Icon | null>(null);
-  const [blueIcon, setBlueIcon] = useState<L.Icon | null>(null);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
-    null
-  );
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [markerAddress, setMarkerAddress] = useState<string | null>(null);
   const [points, setPoints] = useState<PointDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
+  
   const routingControlsRef = useRef<{ [key: string]: L.Routing.Control }>({});
-  const mapRef = useRef<L.Map | null>(null);
-  const initialViewSet = useRef(false);
-
   const map = useMap();
-  mapRef.current = map;
+  const mapRef = useRef<L.Map>(map);
+  const { selectedLayer, updateLayer } = useMapLayer();
 
-  useEffect(() => {
-    const redIconMarker = L.icon({
-      iconUrl: '/assets/icons/marker-icon-red.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-    });
-    setRedIcon(redIconMarker);
+  const redIcon = useMemo(
+    () =>
+      L.icon({
+        iconUrl: '/assets/icons/marker-icon-red.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      }),
+    []
+  );
 
-    const blueIconMarker = L.icon({
-      iconUrl: '/assets/icons/marker-icon-blue.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-    });
-    setBlueIcon(blueIconMarker);
-  }, []);
+  const blueIcon = useMemo(
+    () =>
+      L.icon({
+        iconUrl: '/assets/icons/marker-icon-blue.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      }),
+    []
+  );
 
   const fetchPoints = useCallback(async () => {
     try {
@@ -76,65 +126,258 @@ const MapContent = ({
       const response = await pointService.getAllPoints();
       setPoints(response.data.data || []);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching points:', error);
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+      setIsLoading(false);
     }
   }, []);
+
+  const getAddressFromLatLng = useCallback(async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+      );
+      if (!response.ok) throw new Error('Geocoding failed');
+      const data = await response.json();
+      return data.display_name;
+    } catch (error) {
+      console.error('Error getting address:', error);
+      return null;
+    }
+  }, []);
+
+  const handlePointClick = useCallback(
+    (point: PointDTO) => {
+      if (!mapRef.current || !isMapReady) return;
+      
+      if (onPointClick) {
+        onPointClick(point);
+      }
+
+      const fixedZoomLevel = 8;
+      const newCenter: [number, number] = [point.latitude, point.longitude];
+
+      // First, set the view to the point
+      mapRef.current.setView(newCenter, fixedZoomLevel, { animate: false });
+
+      // Then, after a short delay, adjust for the panel
+      requestAnimationFrame(() => {
+        if (!mapRef.current) return;
+        
+        const mapWidth = mapRef.current.getSize().x;
+        const horizontalOffset = -mapWidth * 0.31;
+        const verticalOffset = mapWidth * 0.1;
+        
+        try {
+          const pointPixel = mapRef.current.latLngToContainerPoint(newCenter);
+          const adjustedCenter = mapRef.current.containerPointToLatLng([
+            pointPixel.x + horizontalOffset,
+            pointPixel.y + verticalOffset,
+          ]);
+
+          mapRef.current.flyTo(adjustedCenter, fixedZoomLevel, {
+            duration: 1
+          });
+        } catch (error) {
+          console.error('Error adjusting view:', error);
+        }
+      });
+    },
+    [onPointClick, isMapReady]
+  );
 
   useEffect(() => {
     fetchPoints();
   }, [fetchPoints]);
 
   useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.invalidateSize();
+    const currentMap = mapRef.current;
+    if (!currentMap) return;
+
+    const handleLoad = () => {
+      setIsMapReady(true);
+    };
+
+    if (currentMap.getZoom() !== undefined) {
+      handleLoad();
+    } else {
+      currentMap.once('load', handleLoad);
     }
+
+    return () => {
+      if (currentMap) {
+        currentMap.off('load', handleLoad);
+      }
+    };
+  }, []);
+
+  // Handle initial view setting
+  useEffect(() => {
+    if (!mapRef.current || !isMapReady) return;
+
+    const initializeMapView = () => {
+      if (moveToCurrentLocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            if (mapRef.current && isMapReady) {
+              requestAnimationFrame(() => {
+                try {
+                  mapRef.current?.setView([latitude, longitude], DEFAULT_ZOOM, { animate: false });
+                } catch (error) {
+                  console.error('Error setting geolocation view:', error);
+                }
+              });
+            }
+          },
+          (error) => {
+            console.error('Geolocation error:', error);
+            if (mapRef.current && isMapReady) {
+              requestAnimationFrame(() => {
+                try {
+                  mapRef.current?.setView(center, DEFAULT_ZOOM, { animate: false });
+                } catch (error) {
+                  console.error('Error setting default view:', error);
+                }
+              });
+            }
+          }
+        );
+      } else if (center) {
+        requestAnimationFrame(() => {
+          try {
+            mapRef.current?.setView(center, DEFAULT_ZOOM, { animate: false });
+          } catch (error) {
+            console.error('Error setting initial view:', error);
+          }
+        });
+      }
+    };
+
+    initializeMapView();
+  }, [center, moveToCurrentLocation, isMapReady]);
+
+  const clearRoutingControls = useCallback(() => {
+    Object.values(routingControlsRef.current).forEach((control) => {
+      try {
+        if (control && control.getPlan) {
+          const plan = control.getPlan();
+          if (plan && plan.setWaypoints) {
+            plan.setWaypoints([]);
+          }
+        }
+        if (mapRef.current && control && control.remove) {
+          control.remove();
+        }
+      } catch (error) {
+        console.error('Error clearing routing control:', error);
+      }
+    });
+    routingControlsRef.current = {};
   }, []);
 
   useEffect(() => {
-    if (!map || initialViewSet.current) return;
-
-    const handleMapReady = () => {
-      try {
-        if (moveToCurrentLocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              if (map) {
-                map.setView([latitude, longitude], 8);
-                initialViewSet.current = true;
-              }
-            },
-            (error) => {
-              console.error(error);
-              if (center) {
-                map.setView(center, map.getZoom());
-                initialViewSet.current = true;
-              }
-            }
-          );
-        } else if (center) {
-          map.setView(center, map.getZoom());
-          initialViewSet.current = true;
-        }
-      } catch (error) {
-        console.error('Error setting map view:', error);
-      }
-    };
-
-    map.whenReady(handleMapReady);
-
     return () => {
-      if (map) {
-        map.off('load', handleMapReady);
-      }
+      clearRoutingControls();
     };
-  }, [center, moveToCurrentLocation, map]);
+  }, [clearRoutingControls]);
 
-  const MapClickHandler = () => {
+  const addRoutingControl = useCallback((route: RouteDTO) => {
+    if (!mapRef.current || !isMapReady) return;
+
+    const waypoints = [
+      L.latLng(route.startPoint.latitude, route.startPoint.longitude),
+      ...(route.points?.map((point) =>
+        L.latLng(point.latitude, point.longitude)
+      ) || []),
+      L.latLng(route.endPoint.latitude, route.endPoint.longitude),
+    ];
+
+    try {
+      const routingControl = L.Routing.control({
+        waypoints,
+        router: L.Routing.osrmv1({
+          serviceUrl: 'https://router.project-osrm.org/route/v1',
+          profile: 'driving',
+          timeout: 20000,
+        }),
+        lineOptions: {
+          styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
+          extendToWaypoints: true,
+          missingRouteTolerance: 100,
+        },
+        addWaypoints: false,
+        fitSelectedRoutes: true,
+        showAlternatives: false,
+        routeWhileDragging: false,
+        show: false,
+        createMarker: () => null,
+      } as any);
+
+      routingControl.addTo(mapRef.current);
+      routingControlsRef.current[route.id] = routingControl;
+    } catch (error) {
+      console.error('Error adding routing control:', error);
+    }
+  }, [isMapReady]);
+
+  useEffect(() => {
+    if (!mapRef.current || !routes || !isMapReady || isLoading) return;
+
+    const setupRoutes = () => {
+      clearRoutingControls();
+
+      routes.forEach((route) => {
+        if (
+          (selectedRoutes?.includes(route.id) || singleRouteMode) &&
+          route.startPoint &&
+          route.endPoint
+        ) {
+          addRoutingControl(route);
+        }
+      });
+
+      // Handle bounds fitting
+      requestAnimationFrame(() => {
+        try {
+          const allWaypoints = Object.values(routingControlsRef.current).flatMap(
+            (control) =>
+              control
+                .getWaypoints()
+                .filter((wp) => wp && wp.latLng)
+                .map((wp) => wp.latLng)
+          );
+
+          if (allWaypoints.length > 1) {
+            const bounds = L.latLngBounds(allWaypoints);
+            if (bounds.isValid() && mapRef.current) {
+              mapRef.current.fitBounds(bounds, {
+                padding: [50, 50],
+                maxZoom: 15,
+                animate: false
+              });
+            }
+          } else if (allWaypoints.length === 1 && mapRef.current) {
+            mapRef.current.setView(allWaypoints[0], DEFAULT_ZOOM, { animate: false });
+          }
+        } catch (error) {
+          console.error('Error fitting bounds:', error);
+        }
+      });
+    };
+
+    setupRoutes();
+  }, [
+    routes,
+    selectedRoutes,
+    singleRouteMode,
+    isLoading,
+    clearRoutingControls,
+    addRoutingControl,
+    isMapReady
+  ]);
+
+  const MapClickHandler = useCallback(() => {
     useMapEvents({
       click: async (event) => {
         const { lat, lng } = event.latlng;
@@ -148,152 +391,16 @@ const MapContent = ({
       },
     });
     return null;
-  };
-
-  const getAddressFromLatLng = async (lat: number, lng: number) => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-      );
-      if (!response.ok) throw new Error('Geocoding failed');
-      const data = await response.json();
-      return data.display_name;
-    } catch (error) {
-      console.error('Error getting address:', error);
-      return null;
-    }
-  };
-
-  const handlePointClick = (point: PointDTO) => {
-    if (onPointClick) {
-      onPointClick(point);
-    }
-
-    const fixedZoomLevel = 8;
-
-    const newCenter: [number, number] = [point.latitude, point.longitude];
-
-    map.setView(newCenter, fixedZoomLevel, {
-      animate: true,
-      duration: 1,
-    });
-
-    setTimeout(() => {
-      const mapWidth = map.getSize().x;
-
-      const horizontalOffset = -mapWidth * 0.31;
-
-      const verticalOffset = mapWidth * 0.1;
-
-      const pointPixel = map.latLngToContainerPoint(newCenter);
-
-      const adjustedCenter = map.containerPointToLatLng([
-        pointPixel.x + horizontalOffset,
-        pointPixel.y + verticalOffset,
-      ]);
-
-      map.flyTo(adjustedCenter, fixedZoomLevel, {
-        animate: true,
-        duration: 1,
-      });
-    }, 600);
-  };
-
-  useEffect(() => {
-    if (!map || !routes || isLoading) return;
-
-    try {
-      Object.keys(routingControlsRef.current).forEach((routeId) => {
-        if (!selectedRoutes?.includes(routeId) && !singleRouteMode) {
-          if (mapRef.current) {
-            mapRef.current.removeControl(routingControlsRef.current[routeId]);
-          }
-          delete routingControlsRef.current[routeId];
-        }
-      });
-    } catch (error) {
-      console.error('Error removing route:', error);
-    }
-    try {
-      routes.forEach((route) => {
-        if (
-          (selectedRoutes?.includes(route.id) || singleRouteMode) &&
-          route.startPoint &&
-          route.endPoint
-        ) {
-          const waypoints = [
-            L.latLng(route.startPoint.latitude, route.startPoint.longitude),
-            ...(route.points
-              ? route.points.map((point) =>
-                  L.latLng(point.latitude, point.longitude)
-                )
-              : []),
-            L.latLng(route.endPoint.latitude, route.endPoint.longitude),
-          ];
-
-          if (routingControlsRef.current[route.id]) {
-            routingControlsRef.current[route.id].setWaypoints(waypoints);
-          } else {
-            const routingControl = L.Routing.control({
-              waypoints,
-              router: L.Routing.osrmv1({
-                serviceUrl: 'https://router.project-osrm.org/route/v1',
-                profile: 'driving',
-                timeout: 20000,
-              }),
-              lineOptions: {
-                styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
-                extendToWaypoints: true,
-                missingRouteTolerance: 100,
-              },
-              addWaypoints: false,
-              fitSelectedRoutes: true,
-              showAlternatives: false,
-              routeWhileDragging: false,
-              show: false,
-              createMarker: () => null,
-            } as any);
-
-            if (mapRef.current) {
-              routingControl.addTo(mapRef.current);
-              routingControlsRef.current[route.id] = routingControl;
-            }
-          }
-        }
-      });
-    } catch (error) {
-      throw new Error('error');
-    }
-
-    const allWaypoints = Object.values(routingControlsRef.current).flatMap(
-      (control) => control.getWaypoints().map((wp) => wp.latLng)
-    );
-
-    if (allWaypoints.length > 0) {
-      const bounds = L.latLngBounds(allWaypoints);
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [map, routes, selectedRoutes, singleRouteMode, isLoading]);
-
-  useEffect(() => {
-    if (!map || !routes) return;
-
-    Object.keys(routingControlsRef.current).forEach((routeId) => {
-      if (!selectedRoutes?.includes(routeId) && !singleRouteMode) {
-        const routingControl = routingControlsRef.current[routeId];
-        if (routingControl) {
-          map.removeControl(routingControl);
-          delete routingControlsRef.current[routeId];
-        }
-      }
-    });
-  }, [map, routes, selectedRoutes, singleRouteMode, isLoading]);
+  }, [onMapClick, getAddressFromLatLng]);
 
   return (
     <>
       {isLoading && <Loading />}
       <LayersControl position="topright">
-        <BaseLayer checked name="Base">
+        <BaseLayer 
+          checked={selectedLayer === MAP_LAYERS.BASE} 
+          name="Base"
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png"
@@ -301,7 +408,10 @@ const MapContent = ({
             minZoom={0}
           />
         </BaseLayer>
-        <BaseLayer name="Dark map">
+        <BaseLayer 
+          checked={selectedLayer === MAP_LAYERS.DARK}
+          name="Dark"
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
@@ -311,24 +421,24 @@ const MapContent = ({
         </BaseLayer>
         <Overlay checked name="Markers">
           <LayerGroup>
-            {redIcon &&
-              points.map((point) => (
-                <Marker
-                  key={point.id}
-                  position={[point.latitude, point.longitude]}
-                  icon={redIcon}
-                  eventHandlers={{
-                    click: () => handlePointClick(point),
-                  }}
-                >
-                  <Popup>{point.name}</Popup>
-                </Marker>
-              ))}
+            {points.map((point) => (
+              <Marker
+                key={point.id}
+                position={[point.latitude, point.longitude]}
+                icon={redIcon}
+                eventHandlers={{
+                  click: () => handlePointClick(point),
+                }}
+              >
+                <Popup>{point.name}</Popup>
+              </Marker>
+            ))}
           </LayerGroup>
         </Overlay>
       </LayersControl>
+      <LayerChangeTracker onLayerChange={updateLayer} />
 
-      {markerPosition && blueIcon && (
+      {markerPosition && (
         <Marker position={markerPosition} icon={blueIcon}>
           <Popup>{markerAddress ? markerAddress : 'Unknown place'}</Popup>
         </Marker>
@@ -340,7 +450,7 @@ const MapContent = ({
 };
 
 const Map = ({
-  center = [0, 0],
+  center = DEFAULT_CENTER,
   moveToCurrentLocation = false,
   onMapClick,
   onPointClick,
@@ -351,8 +461,12 @@ const Map = ({
   return (
     <MapContainer
       center={center}
-      zoom={13}
+      zoom={DEFAULT_ZOOM}
       style={{ height: '100vh', width: '100%' }}
+      attributionControl={false}
+      zoomControl={true}
+      doubleClickZoom={false}
+      scrollWheelZoom={true}
     >
       <MapContent
         center={center}

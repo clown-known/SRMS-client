@@ -6,44 +6,29 @@ import {
   Box,
   Button,
   Typography,
-  TextareaAutosize,
-  Grid,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  List,
-  ListItemText,
-  ListItemButton,
   IconButton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useRouter } from 'next/navigation';
-import CustomInput from '@/components/CustomInput';
+import { pointService } from '@/service/pointService';
+import { CreateRouteDTO, routeService } from '@/service/routeService';
 import { calculateDistance } from '@/utils/distanceUtils';
-import SnackbarCustom from '@/components/Snackbar';
 import { calculateTime } from '@/utils/TimeUtils';
 import { debounceFetching } from '@/utils/debounceFetch';
-import Loading from '@/components/Loading';
-import MenuIcon from '@mui/icons-material/Menu';
+import SnackbarCustom from '@/components/Snackbar';
 import CustomDrawer from '@/components/Drawer';
 import PointSelectionDialog from '@/components/route/PointSelection';
 import RouteForm from '@/components/route/RouteForm';
-import { pointService } from '@/service/pointService';
-import { CreateRouteDTO, routeService } from '@/service/routeService';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import PointDetailsCard from '@/components/points/PointDetailCard';
+import PointDetailsCard from '../points/PointDetailCard';
 
-const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
+interface RouteCreateProps {
+  open: boolean;
+  onClose: () => void;
+  onRouteCreated: () => void;
+}
 
-const RouteCreate = () => {
-  const router = useRouter();
+const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated }) => {
   const [description, setDescription] = useState('');
   const [points, setPoints] = useState<PointDTO[]>([]);
-  const [route, setRoute] = useState<RouteDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -58,7 +43,6 @@ const RouteCreate = () => {
   const [routeName, setRouteName] = useState('');
   const [distance, setDistance] = useState<number | string>('');
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
-  const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
   const [isCardVisible, setIsCardVisible] = useState(false);
 
@@ -102,23 +86,6 @@ const RouteCreate = () => {
     debouncedFetchPoints(searchTerm);
   };
 
-  const updateRouteOnMap = useCallback(
-    (newStartPoint: PointDTO | null, newEndPoint: PointDTO | null) => {
-      if (!route) return;
-
-      const updatedRoute = { ...route };
-      if (newStartPoint) {
-        updatedRoute.startPoint = newStartPoint;
-      }
-      if (newEndPoint) {
-        updatedRoute.endPoint = newEndPoint;
-      }
-
-      setRoute(updatedRoute);
-    },
-    [route]
-  );
-
   const handleSelectPoint = useCallback(
     (point: PointDTO) => {
       if (dialogType === 'start') {
@@ -138,7 +105,6 @@ const RouteCreate = () => {
             setDistance(distance.toFixed(2));
           }
         }
-        updateRouteOnMap(point, null);
       } else {
         setEndPointId(point.id);
         setEndPointName(point.name);
@@ -156,20 +122,17 @@ const RouteCreate = () => {
             setEstimatedTime(estimatedTime);
           }
         }
-        updateRouteOnMap(null, point);
       }
       handleCloseDialog();
     },
-    [dialogType, endPointId, points, startPointId, updateRouteOnMap]
+    [dialogType, endPointId, points, startPointId]
   );
 
   const handleCreateRoute = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!routeName || !startPointId || !endPointId || !distance) {
-      setSnackbarMessage(
-        'Please fill in all fields before creating the route.'
-      );
+      setSnackbarMessage('Please fill in all fields before creating the route.');
       setSnackbarOpen(true);
       return;
     }
@@ -184,24 +147,19 @@ const RouteCreate = () => {
         estimatedTime,
       };
 
-      const createdRoute = await routeService.createRoute(routeData);
-
-      setRoute(createdRoute);
+      await routeService.createRoute(routeData);
       setSnackbarMessage('Route created successfully!');
       setSnackbarOpen(true);
-      router.push('/routes');
+      onRouteCreated();
     } catch (error) {
       setSnackbarMessage(`Error creating route`);
       setSnackbarOpen(true);
     }
   };
+
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
-
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
-  }
 
   const handlePointClick = (point: PointDTO) => {
     setSelectedPoint(point);
@@ -214,16 +172,56 @@ const RouteCreate = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
-      <Box sx={{ flex: 1 }}>
-        <Map singleRouteMode={true} moveToCurrentLocation={true} 
-        onPointClick={handlePointClick} />
+    <CustomDrawer open={open} onClose={onClose} width={400} maxWidth={400}>
+      <Box>
+        <Box className="mb-6 flex items-center">
+          <Button startIcon={<ArrowBackIcon />} onClick={onClose}>
+            Back to Routes
+          </Button>
+        </Box>
+
+        <Typography variant="h4" component="h1" className="mb-6">
+          Create Route
+        </Typography>
+
+        <RouteForm
+          routeName={routeName}
+          setRouteName={setRouteName}
+          startPointName={startPointName}
+          endPointName={endPointName}
+          handleOpenDialog={handleOpenDialog}
+          distance={distance}
+          estimatedTime={estimatedTime}
+          description={description}
+          setDescription={setDescription}
+          handleSubmit={handleCreateRoute}
+          submitButtonText="Create Route"
+        />
+
+        <PointSelectionDialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          dialogType={dialogType}
+          searchTerm={searchTerm}
+          handleSearch={handleSearch}
+          isLoading={isLoading}
+          error={error}
+          points={points}
+          handleSelectPoint={handleSelectPoint}
+        />
+
+        <SnackbarCustom
+          open={snackbarOpen}
+          message={snackbarMessage}
+          onClose={handleCloseSnackbar}
+        />
+
         {isCardVisible && selectedPoint && (
           <Box
             sx={{
               position: 'absolute',
               top: 20,
-              left: openDrawer ? 430 : 50,
+              left: 430,
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
             }}
@@ -232,74 +230,7 @@ const RouteCreate = () => {
           </Box>
         )}
       </Box>
-      <IconButton
-        onClick={() => setOpenDrawer(!openDrawer)}
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: openDrawer ? 397 : -3,
-          zIndex: 1000,
-          backgroundColor: 'white',
-          border: '1px solid black',
-          width: 20,
-          height: 50,
-          borderRadius: 1,
-          transform: 'translateY(-50%)',
-          transition: 'left 0.3s ease-in-out',
-        }}
-      >
-        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-      </IconButton>
-      <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
-        <Box>
-          <Box className="mb-6 flex items-center">
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => router.push('/routes')}
-            >
-              Back to Routes
-            </Button>
-          </Box>
-
-          <Typography variant="h4" component="h1" className="mb-6">
-            Create Route
-          </Typography>
-
-          <RouteForm
-            routeName={routeName}
-            setRouteName={setRouteName}
-            startPointName={startPointName}
-            endPointName={endPointName}
-            handleOpenDialog={handleOpenDialog}
-            distance={distance}
-            estimatedTime={estimatedTime}
-            description={description}
-            setDescription={setDescription}
-            handleSubmit={handleCreateRoute}
-            submitButtonText="Create Route"
-          />
-
-          <PointSelectionDialog
-            open={dialogOpen}
-            onClose={handleCloseDialog}
-            dialogType={dialogType}
-            searchTerm={searchTerm}
-            handleSearch={handleSearch}
-            isLoading={isLoading}
-            error={error}
-            points={points}
-            handleSelectPoint={handleSelectPoint}
-          />
-
-          {/* Snackbar for display validation error*/}
-          <SnackbarCustom
-            open={snackbarOpen}
-            message={snackbarMessage}
-            onClose={handleCloseSnackbar}
-          />
-        </Box>
-      </CustomDrawer>
-    </Box>
+    </CustomDrawer>
   );
 };
 

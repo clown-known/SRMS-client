@@ -2,21 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import {
-  Box,
-  Button,
-  Typography,
-  Select,
-  MenuItem,
-  TextareaAutosize,
-  Grid,
-  Snackbar,
-  IconButton,
-} from '@mui/material';
+import { Box, Button, Typography, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
-import CustomInput from '@/components/CustomInput';
 import SnackbarCustom from '@/components/Snackbar';
 import Loading from '@/components/Loading';
 import CustomDrawer from '@/components/Drawer';
@@ -24,6 +13,7 @@ import { pointService } from '@/service/pointService';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PointDetailsCard from '@/components/points/PointDetailCard';
+import PointForm from '@/components/points/PointForm';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
@@ -137,11 +127,14 @@ const PointEdit = () => {
     setSelectedPoint(null);
   };
 
-
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
-        <Map center={getMapCenter()} onMapClick={onMapClick} onPointClick={handlePointClick} />
+        <Map
+          center={getMapCenter()}
+          onMapClick={onMapClick}
+          onPointClick={handlePointClick}
+        />
         {isCardVisible && selectedPoint && (
           <Box
             sx={{
@@ -160,13 +153,13 @@ const PointEdit = () => {
         onClick={() => setOpenDrawer(!openDrawer)}
         sx={{
           position: 'absolute',
-          top: '50%', 
-          left: openDrawer ? 397 : -3, 
+          top: '50%',
+          left: openDrawer ? 397 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
-          width: 20, 
-          height: 50, 
+          width: 20,
+          height: 50,
           borderRadius: 1,
           transform: 'translateY(-50%)',
           transition: 'left 0.3s ease-in-out',
@@ -191,74 +184,21 @@ const PointEdit = () => {
             Edit Point
           </Typography>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-          >
-            <CustomInput
-              label="Point Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <PointForm
+            name={name}
+            setName={setName}
+            latitude={latitude}
+            setLatitude={setLatitude}
+            longitude={longitude}
+            setLongitude={setLongitude}
+            type={type}
+            setType={setType}
+            description={description}
+            setDescription={setDescription}
+            onSubmit={handleSubmit}
+            submitButtonText="Update Point"
+          />
 
-            <Grid container spacing={2} className="mb-4">
-              <Grid item xs={6}>
-                <CustomInput
-                  label="Latitude"
-                  value={latitude}
-                  onChange={(e) => setLatitude(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <CustomInput
-                  label="Longitude"
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
-                />
-              </Grid>
-            </Grid>
-
-            <Typography variant="subtitle1" className="mb-2">
-              Type
-            </Typography>
-            <Select
-              value={type}
-              onChange={(e) => setType(e.target.value as string)}
-              fullWidth
-              className="mb-4"
-            >
-              <MenuItem value="port">Port</MenuItem>
-              <MenuItem value="dock">Dock</MenuItem>
-              <MenuItem value="mooring buoy">Mooring buoy</MenuItem>
-              <MenuItem value="wharf">Wharf</MenuItem>
-            </Select> 
-
-            <Typography variant="subtitle1" className="mb-2">
-              Description
-            </Typography>
-            <TextareaAutosize
-              minRows={3}
-              maxRows={7}
-              placeholder="Enter description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mb-4 w-full rounded border p-2"
-            />
-
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              type="submit"
-              className="mt-4"
-            >
-              Update Point
-            </Button>
-          </form>
-
-          {/* Snackbar for display validation error*/}
           <SnackbarCustom
             open={snackbarOpen}
             message={snackbarMessage}
