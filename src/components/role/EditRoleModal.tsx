@@ -141,7 +141,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({
           boxShadow: 24,
           p: 3,
           borderRadius: 2,
-          height: '90vh',
+          // height: '90vh',
           display: 'flex',
           flexDirection: 'column',
         }}

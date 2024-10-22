@@ -8,6 +8,9 @@ import {
   AccountsPage as IAccountPage,
 } from '@/service/accountService';
 import Loading from '@/components/Loading';
+import { Permission } from '@/app/lib/enum';
+import RandomBackground from '@/components/RandomBackground';
+import withPermission from '@/hoc/withPermission';
 
 function AccountsPage() {
   const [initialAccounts, setInitialAccounts] = useState<IAccountPage>({
@@ -53,20 +56,24 @@ function AccountsPage() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-center">
-        <h1 className="text-2xl font-bold text-white">Account List</h1>
+    <RandomBackground>
+      {' '}
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6 flex items-center justify-center">
+          <h1 className="text-2xl font-bold text-white">Account List</h1>
+        </div>
+        {isLoading ? ( // Show loading state if data is being fetched
+          <Loading />
+        ) : (
+          <AccountPageContent
+            initialAccounts={initialAccounts}
+            initialRoles={initialRoles.data}
+          />
+        )}
       </div>
-      {isLoading ? ( // Show loading state if data is being fetched
-        <Loading />
-      ) : (
-        <AccountPageContent
-          initialAccounts={initialAccounts}
-          initialRoles={initialRoles.data}
-        />
-      )}
-    </div>
+    </RandomBackground>
   );
 }
 
-export default AccountsPage;
+export default withPermission(AccountsPage, Permission.READ_ACCOUNT);
+// export default AccountsPage;

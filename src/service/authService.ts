@@ -72,8 +72,8 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const register = async (data: RegisterRequest): Promise<LoginResponse> => {
   const response = await axiosInstance.post<LoginResponse>('authentication-service/auth/register', data);
       // Save token to localStorage or any other secure place
-  Cookies.set('token', response.data.data.token.accessToken, { secure: true, httpOnly: true });
-  Cookies.set('refreshToken', response.data.data.token.refreshToken, { secure: true, httpOnly: true });
+  Cookies.set('token', response.data.data.token.accessToken, cookieOptions);
+  Cookies.set('refreshToken', response.data.data.token.refreshToken,cookieOptions);
       // Return the response data
   return response.data;
 }
@@ -91,9 +91,9 @@ export const confirmCode = async (data: ConfirmCodeRequest) => {
   Cookies.remove('token');
   await Cookies.set('token', response.data.data.accessToken,cookieOptions);
 }
-export const resetPassword = async (id: string) => {
+export const resetPassword = async (data:ResetPasswordRequest) => {
   try {
-    const response = await axiosInstance.put<ResetPasswordResponse>(`authentication-service/auth/reset-password/${id}`);
+    const response = await axiosInstance.post<ResetPasswordResponse>(`authentication-service/auth/reset-password`,data);
     return response.data
   } catch (error) {
     return false;
@@ -108,7 +108,7 @@ interface UpdateProfileRequest{
     phoneNumber: string;
 
     address: string;
- 
+
     dateOfBirth: Date;
 }
 interface UpdateProfileResponse extends BaseResponse<ProfileDTO>{
@@ -117,12 +117,6 @@ interface UpdateProfileResponse extends BaseResponse<ProfileDTO>{
 export const UpdateMyProfile = async (data:UpdateProfileRequest) => {
   try {
     const response = await axiosInstance.put<UpdateProfileResponse>('authentication-service/profile',data);
-    // if(response.status === 200){
-    //   localStorage.setItem('username', `${data.firstName} ${data.lastName}`);
-    // }
-    // if (!response.ok) {
-    //   throw new Error('Failed to update profile');
-    // }
     return response;
   } catch (error) {
     console.error('Error updating profile:', error);

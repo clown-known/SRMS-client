@@ -23,7 +23,7 @@ export default function PermissionChips({
 
   const toggleExpansion = () => setIsExpanded(!isExpanded);
 
-  const displayCount = isExpanded ? permissions.length : 5;
+  const displayCount = isExpanded ? permissions.length : 4;
   const remainingCount = permissions.length - displayCount;
 
   if (permissions.length === 0) {

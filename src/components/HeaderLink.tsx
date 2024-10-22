@@ -9,11 +9,12 @@ interface IProps {
 const HeaderLink = (props: IProps) => {
   const { permission } = props;
   const pathname = usePathname();
-  const modules =
-    permission && permission.length !== 0
-      ? Array.from(new Set<string>(permission.map((per) => per.split(':')[0])))
-      : [];
-
+  // const modules =
+  //   permission && permission.length !== 0
+  //     ? Array.from(new Set<string>(permission.map((per) => per.split(':')[0])))
+  //     : [];
+  const modules = permission && permission.length !== 0 ? permission : [];
+  // console.log(modules);
   return (
     <div className="no-scrollbar hidden h-full items-center space-x-1 overflow-x-auto sm:flex">
       {headerNavLinks

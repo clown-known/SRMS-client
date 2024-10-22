@@ -59,7 +59,7 @@ export default function RolePageContent({
         const fetchedRoles = term
           ? await searchRoles(term, currentPage)
           : await getRoles(currentPage);
-        console.log(fetchedRoles);
+        // console.log(fetchedRoles);
         setRoles(fetchedRoles);
       } catch (error) {
         console.error('Error fetching roles:', error);

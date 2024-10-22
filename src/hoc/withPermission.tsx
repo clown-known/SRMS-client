@@ -6,10 +6,15 @@ import Login from '@/app/(auth)/login/page';
 import Loading from '@/components/Loading';
 import ForbiddenPage from '@/components/ForbiddenPage';
 
-const withAuth = (Component: NextComponentType) => {
+const withPermission = (
+  Component: NextComponentType,
+  requiredPermission: string
+) => {
   const AuthenticatedComponent = (props: any) => {
     const dispatch = useDispatch();
-    const { isLoggedIn } = useSelector((state: RootState) => state.user);
+    const { isLoggedIn, permissions } = useSelector(
+      (state: RootState) => state.user
+    );
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -25,6 +30,9 @@ const withAuth = (Component: NextComponentType) => {
       return <Loading />; // Show loading spinner while checking auth
     }
     if (!isLoggedIn) return <Login />;
+    if (!permissions.includes(requiredPermission)) {
+      return <ForbiddenPage />;
+    }
 
     return <Component {...props} />;
   };
@@ -36,4 +44,4 @@ const withAuth = (Component: NextComponentType) => {
   return AuthenticatedComponent;
 };
 
-export default withAuth;
+export default withPermission;

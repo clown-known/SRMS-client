@@ -6,6 +6,7 @@ import axiosInstance from '../../../../axiosConfig';
 import ProfileLayout from '@/components/auth/myprofile';
 import Loading from '@/components/Loading';
 import RandomBackground from '@/components/RandomBackground'; // Import the RandomBackground component
+import withAuth from '@/hoc/withAuth';
 
 interface ProfileDTOResponse {
   data: ProfileDTO;
@@ -36,7 +37,7 @@ const Profile: FC = () => {
   if (isLoading) return <Loading />;
 
   return (
-    <RandomBackground>
+    <RandomBackground className="items-center justify-center">
       {' '}
       {/* Wrap the ProfileLayout with RandomBackground */}
       <ProfileLayout profile={data?.data.data || defaultProfile} />
@@ -44,4 +45,5 @@ const Profile: FC = () => {
   );
 };
 
-export default Profile;
+export default withAuth(Profile);
+// export default Profile;

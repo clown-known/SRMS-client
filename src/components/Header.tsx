@@ -6,7 +6,6 @@ import headerNavLinks from '@/data/headerNavLinks';
 import MobileNav from './MobileNav';
 import UserProfileDropdown from './UserDropdown';
 import Welcome from './Welcome';
-import { relative } from 'path';
 
 const Header = () => {
   return (
