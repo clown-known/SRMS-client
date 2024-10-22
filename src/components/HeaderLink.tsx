@@ -22,7 +22,7 @@ const HeaderLink = (props: IProps) => {
           (per) => modules.includes(per.permission) || per.permission === ''
         )
         .map((link) => {
-          const isActive = pathname === link.href;
+          const isActive = pathname.includes(link.href);
           return (
             <Link
               key={link.title}

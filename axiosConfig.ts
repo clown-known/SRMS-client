@@ -25,7 +25,7 @@ const refreshAccessToken = async () => {
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = Cookies.get('token');
-    // console.log(token)
+    console.log(token)
     // const token = localStorage.getItem('token'); // Example: Get token from localStorage
     if (token) {
       config.headers.Authorization = `Bearer ${token}`; // Add token to Authorization header

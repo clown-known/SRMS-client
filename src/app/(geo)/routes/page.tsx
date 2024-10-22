@@ -164,7 +164,7 @@ const Routes = () => {
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
         <Map
-          moveToCurrentLocation={true}
+          moveToCurrentLocation
           routes={routes}
           selectedRoutes={selectedRoutes}
           onPointClick={handlePointClick}

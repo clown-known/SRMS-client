@@ -98,8 +98,17 @@ const Register: FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-lg bg-gray-200 p-8 shadow-lg">
+    <div
+      className="flex min-h-screen items-center justify-center bg-gray-100"
+      style={{
+        backgroundImage:
+          'url(https://images.wallpaperscraft.com/image/single/sea_waves_ocean_126805_3840x2160.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className="w-full max-w-md rounded-lg bg-gray-200 bg-opacity-80 p-8 shadow-lg">
         <h2 className="mb-6 text-center text-3xl font-semibold text-gray-800">
           Register
         </h2>
