@@ -6,14 +6,14 @@ const Member = () => {
     {
       avatar: '/assets/images/Nam.jpg',
       name: 'Nam Nguyen',
-      title: 'Founder of Lyconf',
+      title: 'Full-stack Developer ( Leader)',
       quote:
         'As a small business owner, I was doing everything and my workload was increasing. With this startup, I was able to save time so I could focus on the things that matter most: my clients and my family.',
     },
     {
       avatar: '/assets/images/Kiet.png',
       name: 'Kiet Lai',
-      title: 'DevOps engineer',
+      title: 'Full-stack Developer',
       quote:
         "My company's software now is easy to use, saves time and money, and is loved by a lot of users. One customer saved $10k over the course of 3 years and another saves 8 hours per week! Thanks to Blinder.",
     },
@@ -27,7 +27,7 @@ const Member = () => {
             Team Members
           </h2>
           <p className="mt-3 text-gray-200">
-            Listen to what the experts around the world are saying about us.
+            About us and the main responsibilities.
           </p>
         </div>
         <div className="mt-12">

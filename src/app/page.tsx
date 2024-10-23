@@ -14,6 +14,7 @@ import CTA from '@/components/home/CTA';
 import ToolKit from '@/components/home/ToolKit';
 import Member from '@/components/home/Member';
 import Start from '@/components/home/Start';
+import CardSection from '@/components/home/CardSection';
 
 export default function Home() {
   return (
@@ -21,28 +22,22 @@ export default function Home() {
       <Intro />
       <CoreGrid />
       <YouTubeVideo
-        videoId="lqAU0wQIbZE"
-        title="Your Video Title"
+        videoId="vx5mXiOh5Ec"
+        title="invideo ai 1080 Revolutionize Your Shipping Routes"
         subtitle="Your Video Subtitle"
         description="Your video description goes here."
       />
+
       <GradientWrapper>
+        <ToolKit />
         <Features />
         <HomeSlider />
-        {/* <CTA /> */}
       </GradientWrapper>
-      <ToolKit />
       <GradientWrapper>
         <Member />
       </GradientWrapper>
-      <Start />
-      {/* <YouTubeVideo videoId="lqAU0wQIbZE" title="Your Video Title" /> */}
-      {/* <YouTubeVideo
-        videoId="lqAU0wQIbZE"
-        title="Your Video Title"
-        subtitle="Your Video Subtitle"
-        description="Your video description goes here."
-      /> */}
+
+      <CardSection />
       <Footer />
     </div>
   );
