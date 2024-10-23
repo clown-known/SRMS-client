@@ -7,9 +7,11 @@ const backgroundImages = [
   // Add more image URLs as needed
 ];
 
-const RandomBackground: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+const RandomBackground: React.FC<{
+  children: React.ReactNode;
+  // eslint-disable-next-line react/require-default-props
+  className?: string;
+}> = ({ children, className }) => {
   const [backgroundImage, setBackgroundImage] = useState('');
 
   useEffect(() => {
@@ -19,7 +21,7 @@ const RandomBackground: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center"
+      className={`flex min-h-screen ${className}`} // Include additional class names
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',

@@ -69,7 +69,7 @@ const Login: FC = () => {
   };
 
   return (
-    <RandomBackground>
+    <RandomBackground className="items-center justify-center">
       <div className="w-full max-w-md rounded-lg bg-gray-200 bg-opacity-80 p-8 shadow-lg">
         <h2 className="mb-6 text-center text-3xl font-semibold text-gray-800">
           Sign In

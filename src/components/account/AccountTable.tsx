@@ -23,6 +23,8 @@ import { unAssignRole, UpdateAccountRequest } from '@/service/accountService';
 import AssignRoleModal from './AssignRoleModal';
 import { RootState, useAppDispatch } from '@/store/store';
 import { fetchUserPermissions } from '@/store/userSlice';
+import { Permission } from '@/app/lib/enum';
+import AccountActions from './AccountActions';
 
 const fontStack = `ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`;
 
@@ -51,6 +53,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  height: '70px',
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
   },
@@ -177,44 +180,15 @@ export default function AccountTable({
                   </StyledTableCell>
                   <StyledTableCell>{account.role?.name}</StyledTableCell>
                   <StyledTableCell>
-                    {hasPermission('account:update') &&
-                      !isSameRoleOfUser(account.role?.id) && (
-                        <Tooltip title="Edit">
-                          <IconButton onClick={() => handleEditClick(account)}>
-                            <Edit />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    {hasPermission('account:assign-role') &&
-                      !isSameRoleOfUser(account.role?.id) && (
-                        <Tooltip title="Assign Role">
-                          <IconButton
-                            onClick={() => handleAssignRoleClick(account)}
-                          >
-                            <AssignmentInd />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    {hasPermission('account:reset-password') &&
-                      !isSameRoleOfUser(account.role?.id) && (
-                        <Tooltip title="Reset Password">
-                          <IconButton
-                            onClick={() => handleResetPasswordClick(account)}
-                          >
-                            <LockResetIcon />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    {hasPermission('account:delete') &&
-                      !isSameRoleOfUser(account.role?.id) && (
-                        <Tooltip title="Delete">
-                          <IconButton
-                            onClick={() => handleDeleteClick(account)}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </Tooltip>
-                      )}
+                    <AccountActions
+                      account={account}
+                      hasPermission={hasPermission}
+                      isSameRoleOfUser={isSameRoleOfUser}
+                      onEdit={handleEditClick}
+                      onAssignRole={handleAssignRoleClick}
+                      onResetPassword={handleResetPasswordClick}
+                      onDelete={handleDeleteClick}
+                    />
                   </StyledTableCell>
                 </StyledTableRow>
               ))}

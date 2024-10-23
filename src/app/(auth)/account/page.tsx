@@ -8,6 +8,7 @@ import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
 import { changePassword } from '@/service/authService';
 import CustomSnackbar from '@/components/CustomSnackbar';
 import RandomBackground from '@/components/RandomBackground'; // Import the RandomBackground component
+import withAuth from '@/hoc/withAuth';
 
 interface AccountDTOResponse {
   data: AccountDTO;
@@ -72,7 +73,7 @@ const Account: FC = () => {
   if (isLoading || isValidating) return <Loading />;
 
   return (
-    <RandomBackground>
+    <RandomBackground className="items-center justify-center">
       {' '}
       {/* Wrap the content with RandomBackground */}
       <div className="flex min-h-screen items-center justify-center">
@@ -91,7 +92,7 @@ const Account: FC = () => {
           <div className="mb-8">
             <p className="text-sm font-medium text-gray-500">Role</p>
             <p className="text-lg text-gray-900">
-              {data?.data.data.role?.name}
+              {data?.data.data.role?.name || 'None'}
             </p>
           </div>
           <button
@@ -119,4 +120,5 @@ const Account: FC = () => {
   );
 };
 
-export default Account;
+export default withAuth(Account);
+// export default Account;

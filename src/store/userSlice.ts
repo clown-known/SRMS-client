@@ -48,6 +48,8 @@ export const userSlice = createSlice({
       state.permissions = action.payload.permissions;
       state.username = action.payload.name
       state.roleId = action.payload.roleId
+      if(!action.payload.name) state.isLoggedIn = false;
+      else state.isLoggedIn = true
     });
   },
 });

@@ -8,6 +8,9 @@ import {
 } from '@/service/roleService';
 import RolePageContent from '@/components/role/RolePageContent';
 import Loading from '@/components/Loading';
+import { Permission } from '@/app/lib/enum';
+import RandomBackground from '@/components/RandomBackground';
+import withPermission from '@/hoc/withPermission';
 
 function RolesPage() {
   const [initialRoles, setInitialRoles] = useState<IRolesPage>({
@@ -45,20 +48,24 @@ function RolesPage() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-center">
-        <h1 className="text-2xl font-bold text-white">Role List</h1>
+    <RandomBackground>
+      {' '}
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6 flex items-center justify-center">
+          <h1 className="text-2xl font-bold text-white">Role List</h1>
+        </div>
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <RolePageContent
+            initialRoles={initialRoles}
+            initialPermissions={initialPermissions}
+          />
+        )}
       </div>
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <RolePageContent
-          initialRoles={initialRoles}
-          initialPermissions={initialPermissions}
-        />
-      )}
-    </div>
+    </RandomBackground>
   );
 }
 
-export default RolesPage;
+export default withPermission(RolesPage, Permission.READ_ROLE);
+// export default RolesPage;

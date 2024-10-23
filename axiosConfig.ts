@@ -47,7 +47,7 @@ axiosInstance.interceptors.response.use(
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refreshToken = Cookies.get('refreshToken');
-      
+
       if (!refreshToken) {
         // If no refresh token, reject the request
         return Promise.reject(error);
@@ -60,10 +60,10 @@ axiosInstance.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return axiosInstance(originalRequest);
         } 
-          // If refreshAccessToken returns null or undefined
-          Cookies.remove('token');
-          Cookies.remove('refreshToken');
-          return Promise.reject(error);
+        // If refreshAccessToken returns null or undefined
+        Cookies.remove('token');
+        Cookies.remove('refreshToken');
+        return Promise.reject(error);
         
       } catch (refreshError) {
         // If refreshAccessToken throws an error (e.g., 401 from refresh endpoint)

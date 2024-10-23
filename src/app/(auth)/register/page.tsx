@@ -2,9 +2,15 @@
 
 import { FC, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
 import { register } from '@/service/authService';
+import { loginState } from '@/store/userSlice';
+import CustomSnackbar from '@/components/CustomSnackbar';
 
 const Register: FC = () => {
+  const dispatch = useDispatch();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -92,11 +98,26 @@ const Register: FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      const response = await register(formData);
-      if (response) router.push('/');
+      try {
+        const response = await register(formData);
+        dispatch(
+          loginState({
+            username: response.data.name,
+            permission: response.data.token.permission,
+          })
+        );
+        setSnackbarMessage('Register successful!');
+        setSnackbarOpen(true);
+        setTimeout(() => router.push('/'), 1000); // Redirect after 1 second
+      } catch (error) {
+        setSnackbarMessage('Login failed. Please check your credentials.');
+        setSnackbarOpen(true);
+      }
     }
   };
-
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
   return (
     <div
       className="flex min-h-screen items-center justify-center bg-gray-100"
@@ -225,6 +246,11 @@ const Register: FC = () => {
           </button>
         </form>
       </div>
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
+      />
     </div>
   );
 };
