@@ -45,8 +45,8 @@ const DEFAULT_CENTER: [number, number] = [0, 0];
 const DEFAULT_ZOOM = 8;
 
 const useMapLayer = () => {
-  const [selectedLayer, setSelectedLayer] = useState(() => 
-    localStorage.getItem('selectedMapLayer') || MAP_LAYERS.BASE
+  const [selectedLayer, setSelectedLayer] = useState(
+    () => localStorage.getItem('selectedMapLayer') || MAP_LAYERS.BASE
   );
 
   const updateLayer = useCallback((layer: string) => {
@@ -57,7 +57,11 @@ const useMapLayer = () => {
   return { selectedLayer, updateLayer };
 };
 
-const LayerChangeTracker = ({ onLayerChange }: { onLayerChange: (layer: string) => void }) => {
+const LayerChangeTracker = ({
+  onLayerChange,
+}: {
+  onLayerChange: (layer: string) => void;
+}) => {
   const map = useMap();
 
   useEffect(() => {
@@ -87,12 +91,14 @@ const MapContent = ({
   singleRouteMode,
   onPointClick,
 }: MapProps) => {
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(
+    null
+  );
   const [markerAddress, setMarkerAddress] = useState<string | null>(null);
   const [points, setPoints] = useState<PointDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
-  
+
   const routingControlsRef = useRef<{ [key: string]: L.Routing.Control }>({});
   const map = useMap();
   const mapRef = useRef<L.Map>(map);
@@ -123,8 +129,8 @@ const MapContent = ({
   const fetchPoints = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await pointService.getAllPoints();
-      setPoints(response.data.data || []);
+      const response = await pointService.getAllPointsWithoutPagination();
+      setPoints(response);
     } catch (error) {
       console.error('Error fetching points:', error);
     } finally {
@@ -149,25 +155,25 @@ const MapContent = ({
   const handlePointClick = useCallback(
     (point: PointDTO) => {
       if (!mapRef.current || !isMapReady) return;
-      
+
       if (onPointClick) {
         onPointClick(point);
       }
 
-      const fixedZoomLevel = 8;
       const newCenter: [number, number] = [point.latitude, point.longitude];
 
-      // First, set the view to the point
-      mapRef.current.setView(newCenter, fixedZoomLevel, { animate: false });
+      mapRef.current.setView(newCenter, DEFAULT_ZOOM, {
+        animate: true,
+        duration: 500,
+      });
 
-      // Then, after a short delay, adjust for the panel
       requestAnimationFrame(() => {
         if (!mapRef.current) return;
-        
+
         const mapWidth = mapRef.current.getSize().x;
         const horizontalOffset = -mapWidth * 0.31;
         const verticalOffset = mapWidth * 0.1;
-        
+
         try {
           const pointPixel = mapRef.current.latLngToContainerPoint(newCenter);
           const adjustedCenter = mapRef.current.containerPointToLatLng([
@@ -175,8 +181,8 @@ const MapContent = ({
             pointPixel.y + verticalOffset,
           ]);
 
-          mapRef.current.flyTo(adjustedCenter, fixedZoomLevel, {
-            duration: 1
+          mapRef.current.flyTo(adjustedCenter, DEFAULT_ZOOM, {
+            duration: 1,
           });
         } catch (error) {
           console.error('Error adjusting view:', error);
@@ -211,7 +217,6 @@ const MapContent = ({
     };
   }, []);
 
-  // Handle initial view setting
   useEffect(() => {
     if (!mapRef.current || !isMapReady) return;
 
@@ -223,7 +228,9 @@ const MapContent = ({
             if (mapRef.current && isMapReady) {
               requestAnimationFrame(() => {
                 try {
-                  mapRef.current?.setView([latitude, longitude], DEFAULT_ZOOM, { animate: false });
+                  mapRef.current?.setView([latitude, longitude], DEFAULT_ZOOM, {
+                    animate: false,
+                  });
                 } catch (error) {
                   console.error('Error setting geolocation view:', error);
                 }
@@ -235,7 +242,9 @@ const MapContent = ({
             if (mapRef.current && isMapReady) {
               requestAnimationFrame(() => {
                 try {
-                  mapRef.current?.setView(center, DEFAULT_ZOOM, { animate: false });
+                  mapRef.current?.setView(center, DEFAULT_ZOOM, {
+                    animate: false,
+                  });
                 } catch (error) {
                   console.error('Error setting default view:', error);
                 }
@@ -243,15 +252,16 @@ const MapContent = ({
             }
           }
         );
-      } else if (center) {
-        requestAnimationFrame(() => {
-          try {
-            mapRef.current?.setView(center, DEFAULT_ZOOM, { animate: false });
-          } catch (error) {
-            console.error('Error setting initial view:', error);
-          }
-        });
       }
+      // else if (center) {
+      //   requestAnimationFrame(() => {
+      //     try {
+      //       mapRef.current?.setView(center, DEFAULT_ZOOM, {  animate: true, duration: 500 });
+      //     } catch (error) {
+      //       console.error('Error setting initial view:', error);
+      //     }
+      //   });
+      // }
     };
 
     initializeMapView();
@@ -282,44 +292,47 @@ const MapContent = ({
     };
   }, [clearRoutingControls]);
 
-  const addRoutingControl = useCallback((route: RouteDTO) => {
-    if (!mapRef.current || !isMapReady) return;
+  const addRoutingControl = useCallback(
+    (route: RouteDTO) => {
+      if (!mapRef.current || !isMapReady) return;
 
-    const waypoints = [
-      L.latLng(route.startPoint.latitude, route.startPoint.longitude),
-      ...(route.points?.map((point) =>
-        L.latLng(point.latitude, point.longitude)
-      ) || []),
-      L.latLng(route.endPoint.latitude, route.endPoint.longitude),
-    ];
+      const waypoints = [
+        L.latLng(route.startPoint.latitude, route.startPoint.longitude),
+        ...(route.points?.map((point) =>
+          L.latLng(point.latitude, point.longitude)
+        ) || []),
+        L.latLng(route.endPoint.latitude, route.endPoint.longitude),
+      ];
 
-    try {
-      const routingControl = L.Routing.control({
-        waypoints,
-        router: L.Routing.osrmv1({
-          serviceUrl: 'https://router.project-osrm.org/route/v1',
-          profile: 'driving',
-          timeout: 20000,
-        }),
-        lineOptions: {
-          styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
-          extendToWaypoints: true,
-          missingRouteTolerance: 100,
-        },
-        addWaypoints: false,
-        fitSelectedRoutes: true,
-        showAlternatives: false,
-        routeWhileDragging: false,
-        show: false,
-        createMarker: () => null,
-      } as any);
+      try {
+        const routingControl = L.Routing.control({
+          waypoints,
+          router: L.Routing.osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1',
+            profile: 'driving',
+            timeout: 30000,
+          }),
+          lineOptions: {
+            styles: [{ color: 'blue', weight: 4, opacity: 0.7 }],
+            extendToWaypoints: true,
+            missingRouteTolerance: 100,
+          },
+          addWaypoints: false,
+          fitSelectedRoutes: true,
+          showAlternatives: false,
+          routeWhileDragging: false,
+          show: false,
+          createMarker: () => null,
+        } as any);
 
-      routingControl.addTo(mapRef.current);
-      routingControlsRef.current[route.id] = routingControl;
-    } catch (error) {
-      console.error('Error adding routing control:', error);
-    }
-  }, [isMapReady]);
+        routingControl.addTo(mapRef.current);
+        routingControlsRef.current[route.id] = routingControl;
+      } catch (error) {
+        console.error('Error adding routing control:', error);
+      }
+    },
+    [isMapReady]
+  );
 
   useEffect(() => {
     if (!mapRef.current || !routes || !isMapReady || isLoading) return;
@@ -340,12 +353,13 @@ const MapContent = ({
       // Handle bounds fitting
       requestAnimationFrame(() => {
         try {
-          const allWaypoints = Object.values(routingControlsRef.current).flatMap(
-            (control) =>
-              control
-                .getWaypoints()
-                .filter((wp) => wp && wp.latLng)
-                .map((wp) => wp.latLng)
+          const allWaypoints = Object.values(
+            routingControlsRef.current
+          ).flatMap((control) =>
+            control
+              .getWaypoints()
+              .filter((wp) => wp && wp.latLng)
+              .map((wp) => wp.latLng)
           );
 
           if (allWaypoints.length > 1) {
@@ -354,11 +368,13 @@ const MapContent = ({
               mapRef.current.fitBounds(bounds, {
                 padding: [50, 50],
                 maxZoom: 15,
-                animate: false
+                animate: false,
               });
             }
           } else if (allWaypoints.length === 1 && mapRef.current) {
-            mapRef.current.setView(allWaypoints[0], DEFAULT_ZOOM, { animate: false });
+            mapRef.current.setView(allWaypoints[0], DEFAULT_ZOOM, {
+              animate: false,
+            });
           }
         } catch (error) {
           console.error('Error fitting bounds:', error);
@@ -374,7 +390,7 @@ const MapContent = ({
     isLoading,
     clearRoutingControls,
     addRoutingControl,
-    isMapReady
+    isMapReady,
   ]);
 
   const MapClickHandler = useCallback(() => {
@@ -397,10 +413,7 @@ const MapContent = ({
     <>
       {isLoading && <Loading />}
       <LayersControl position="topright">
-        <BaseLayer 
-          checked={selectedLayer === MAP_LAYERS.BASE} 
-          name="Base"
-        >
+        <BaseLayer checked={selectedLayer === MAP_LAYERS.BASE} name="Base">
           <TileLayer
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png"
@@ -408,10 +421,7 @@ const MapContent = ({
             minZoom={0}
           />
         </BaseLayer>
-        <BaseLayer 
-          checked={selectedLayer === MAP_LAYERS.DARK}
-          name="Dark"
-        >
+        <BaseLayer checked={selectedLayer === MAP_LAYERS.DARK} name="Dark">
           <TileLayer
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
@@ -460,6 +470,7 @@ const Map = ({
 }: MapProps) => {
   return (
     <MapContainer
+      key={`map-${center[0]}-${center[1]}`}
       center={center}
       zoom={DEFAULT_ZOOM}
       style={{ height: '100vh', width: '100%' }}
