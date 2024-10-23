@@ -23,7 +23,7 @@ interface RouteFormProps {
   submitButtonText: string;
 }
 
-const RouteForm: React.FC<RouteFormProps> = ({
+const RouteForm = ({
   routeName,
   setRouteName,
   startPointName,
@@ -35,7 +35,7 @@ const RouteForm: React.FC<RouteFormProps> = ({
   setDescription,
   handleSubmit,
   submitButtonText,
-}) => {
+}: RouteFormProps) => {
   const TimeDisplay =
     estimatedTime > 24
       ? `${Math.round(estimatedTime / 24)} day(s)`

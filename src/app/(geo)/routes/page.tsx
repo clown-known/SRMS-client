@@ -2,22 +2,19 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, IconButton } from '@mui/material';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import MenuIcon from '@mui/icons-material/Menu';
 import { routeService } from '@/service/routeService';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import RoutesDrawer from '@/components/route/RoutesDrawer';
-import CloseIcon from '@mui/icons-material/Close';
 import PointDetailsCard from '@/components/points/PointDetailCard';
-
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import RouteCreate from '@/components/route/RouteCreateDrawer';
 
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
 const Routes = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -29,9 +26,11 @@ const Routes = () => {
   const [routeToDelete, setRouteToDelete] = useState<string | null>(null);
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [openRoutesDialog, setOpenRoutesDialog] = useState(false);
+  const [openRoutesDrawer, setOpenRoutesDrawer] = useState(false);
+  const [openCreateDrawer, setOpenCreateDrawer] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
   const [isCardVisible, setIsCardVisible] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Set initial page number from search params
   const page = parseInt(searchParams.get('page') || '1', 10);
@@ -67,7 +66,8 @@ const Routes = () => {
   useEffect(() => {
     fetchRoutes(page, searchParams.get('searchKey') || '');
     if (searchParams.get('searchKey') || searchParams.get('page')) {
-      setOpenRoutesDialog(true);
+      setOpenRoutesDrawer(true);
+      setDrawerOpen(true);
     }
   }, [page, searchParams, fetchRoutes]);
 
@@ -76,9 +76,13 @@ const Routes = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Submit search on button click or Enter key press
   const handleSearchSubmit = () => {
-    router.push(`/routes?page=1&searchKey=${encodeURIComponent(searchTerm)}`);
+    // Update URL with search params without navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', '1');
+    url.searchParams.set('searchKey', searchTerm);
+    window.history.pushState({}, '', url);
+    fetchRoutes(1, searchTerm);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -95,7 +99,7 @@ const Routes = () => {
       setIsLoading(true);
       try {
         await routeService.deleteRoute(routeToDelete);
-        router.refresh();
+        fetchRoutes(page, searchTerm);
       } catch (error) {
         console.error(error);
         setError('An error occurred while deleting the route');
@@ -130,11 +134,37 @@ const Routes = () => {
     setSelectedPoint(null);
   };
 
+  const handleAddNewRoute = () => {
+    setOpenRoutesDrawer(false);
+    setOpenCreateDrawer(true);
+  };
+
+  const handleCloseCreateDrawer = () => {
+    setOpenCreateDrawer(false);
+    setOpenRoutesDrawer(true);
+  };
+
+  const handleToggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+    if (!drawerOpen) {
+      // When opening drawer, show the last active drawer
+      if (openCreateDrawer) {
+        setOpenCreateDrawer(true);
+      } else {
+        setOpenRoutesDrawer(true);
+      }
+    } else {
+      // When closing drawer, hide both
+      setOpenRoutesDrawer(false);
+      setOpenCreateDrawer(false);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1 }}>
         <Map
-          moveToCurrentLocation={true}
+          moveToCurrentLocation
           routes={routes}
           selectedRoutes={selectedRoutes}
           onPointClick={handlePointClick}
@@ -143,8 +173,8 @@ const Routes = () => {
           <Box
             sx={{
               position: 'absolute',
-              top: openRoutesDialog ? 70 : 20,
-              left: openRoutesDialog ? 750 : 50, 
+              top: 70,
+              left: openCreateDrawer ? 430 : drawerOpen ? 750 : 50,
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
             }}
@@ -153,12 +183,13 @@ const Routes = () => {
           </Box>
         )}
       </Box>
+
       <IconButton
-        onClick={() => setOpenRoutesDialog(!openRoutesDialog)}
+        onClick={handleToggleDrawer}
         sx={{
           position: 'absolute',
           top: '50%',
-          left: openRoutesDialog ? 727 : -3,
+          left: openCreateDrawer ? 397 : drawerOpen ? 727 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
@@ -169,13 +200,15 @@ const Routes = () => {
           transition: 'left 0.3s ease-in-out',
         }}
       >
-        {openRoutesDialog ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+        {drawerOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </IconButton>
 
-
       <RoutesDrawer
-        open={openRoutesDialog}
-        onClose={() => setOpenRoutesDialog(false)}
+        open={openRoutesDrawer}
+        onClose={() => {
+          setOpenRoutesDrawer(false);
+          setDrawerOpen(false);
+        }}
         routes={routes}
         isLoading={isLoading}
         error={error}
@@ -187,9 +220,20 @@ const Routes = () => {
         selectedRoutes={selectedRoutes}
         totalPages={totalPages}
         currentPage={page}
+        onAddNewRoute={handleAddNewRoute}
       />
 
-      {/* Confirmation Dialog */}
+      {openCreateDrawer && (
+        <RouteCreate
+          open={openCreateDrawer}
+          onClose={handleCloseCreateDrawer}
+          onRouteCreated={() => {
+            fetchRoutes(page, searchTerm);
+            handleCloseCreateDrawer();
+          }}
+        />
+      )}
+
       <ConfirmDeleteDialog
         open={openDialog}
         onClose={handleCloseDialog}

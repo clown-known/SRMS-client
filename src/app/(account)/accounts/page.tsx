@@ -1,23 +1,70 @@
-import { getRoles } from '@/service/roleService';
-import AccountPageContent from '@/components/account/AccountPageContent';
-import { getAccounts } from '@/service/accountService';
+'use client';
 
-// eslint-disable-next-line @next/next/no-async-client-component
-async function AccountsPage() {
-  const accountsData = await getAccounts();
-  const initialAccounts = accountsData || [];
-  const rolesData = await getRoles();
-  const initialRoles = rolesData.data || [];
+import { useEffect, useState } from 'react';
+import { getRoles, RolesPage } from '@/service/roleService';
+import AccountPageContent from '@/components/account/AccountPageContent';
+import {
+  getAccounts,
+  AccountsPage as IAccountPage,
+} from '@/service/accountService';
+import Loading from '@/components/Loading';
+
+function AccountsPage() {
+  const [initialAccounts, setInitialAccounts] = useState<IAccountPage>({
+    data: [],
+    meta: {
+      page: 0,
+      take: 0,
+      itemCount: 0,
+      pageCount: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    },
+  });
+  const [initialRoles, setInitialRoles] = useState<RolesPage>({
+    data: [],
+    meta: {
+      page: 0,
+      take: 0,
+      itemCount: 0,
+      pageCount: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    },
+  });
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true); // Set loading to true before fetching
+      try {
+        const accountsData = await getAccounts();
+        setInitialAccounts(accountsData);
+        const rolesData = await getRoles();
+        setInitialRoles(rolesData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false); // Set loading to false after fetching
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-center">
         <h1 className="text-2xl font-bold text-white">Account List</h1>
       </div>
-      <AccountPageContent
-        initialAccounts={initialAccounts}
-        initialRoles={initialRoles}
-      />
+      {isLoading ? ( // Show loading state if data is being fetched
+        <Loading />
+      ) : (
+        <AccountPageContent
+          initialAccounts={initialAccounts}
+          initialRoles={initialRoles.data}
+        />
+      )}
     </div>
   );
 }

@@ -2,14 +2,14 @@ import axiosInstance from "../../axiosConfig";
 
 export interface AccountsPage{
   data: AccountDTO[];
-      meta: {
-        page: number;
-        take: number;
-        itemCount: number;
-        pageCount: number;
-        hasPreviousPage: boolean;
-        hasNextPage: boolean;
-      };
+  meta: {
+    page: number;
+    take: number;
+    itemCount: number;
+    pageCount: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+  };
 }
 interface AccountsResponse {
     data: {
@@ -64,8 +64,12 @@ interface AssignRoleToUserRequest {
 }
 
 export const getAccounts = async (page: number = 1, take: number = 10): Promise<AccountsPage> => {
+  // try{
   const response = await axiosInstance.get<AccountsResponse>(`authentication-service/account?page=${page}&take=${take}`);
   return response.data.data;
+  // } catch (error) {
+  //   return {};
+  // }
 }
 
 export const deleteAccount = async (id: string) => {

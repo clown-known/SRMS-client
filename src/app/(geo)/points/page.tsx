@@ -3,20 +3,21 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Box, Button, Typography, IconButton, Tooltip } from '@mui/material';
-import AnchorIcon from '@mui/icons-material/Anchor';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
 import PaginationCustom from '@/components/Pagination';
 import CustomDrawer from '@/components/Drawer';
-import Loading from '@/components/Loading';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
 import { pointService } from '@/service/pointService';
 import PointDetailsCard from '@/components/points/PointDetailCard';
 import SearchInput from '@/components/geo/SearchInput';
-import AddIcon from '@mui/icons-material/Add';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PointsList from '@/components/points/PointList';
+import PointForm from '@/components/points/PointForm';
+import SnackbarCustom from '@/components/Snackbar';
 
 // Load the map component
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
@@ -25,6 +26,7 @@ const Points = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // List points states
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get('searchKey') || ''
   );
@@ -34,12 +36,24 @@ const Points = () => {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
-  const [openDrawer, setOpenDrawer] = useState(false);
+  const [openListDrawer, setOpenListDrawer] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
   const [isCardVisible, setIsCardVisible] = useState(false);
 
-  // Set initial page number from search params
+  // Create point states
+  const [openCreateDrawer, setOpenCreateDrawer] = useState(false);
+
+  // Form states
+  const [name, setName] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [type, setType] = useState('');
+  const [description, setDescription] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
   const page = parseInt(searchParams.get('page') || '1', 10);
+  const [mapKey, setMapKey] = useState(0);
 
   // Fetch points
   const fetchPoints = useCallback(
@@ -47,9 +61,6 @@ const Points = () => {
       setIsLoading(true);
       setError('');
       try {
-        const searchParam = searchKey
-          ? `&searchKey=${encodeURIComponent(searchKey)}`
-          : '';
         const response = await pointService.getAllPoints(
           currentPage,
           10,
@@ -73,7 +84,7 @@ const Points = () => {
   useEffect(() => {
     fetchPoints(page, searchParams.get('searchKey') || '');
     if (searchParams.get('searchKey') || searchParams.get('page')) {
-      setOpenDrawer(true);
+      setOpenListDrawer(true);
     }
   }, [page, searchParams, fetchPoints]);
 
@@ -82,7 +93,6 @@ const Points = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Submit search on button click or Enter key press
   const handleSearchSubmit = () => {
     router.push(`/points?page=1&searchKey=${encodeURIComponent(searchTerm)}`);
   };
@@ -91,13 +101,80 @@ const Points = () => {
     if (e.key === 'Enter') handleSearchSubmit();
   };
 
-  // Delete point
+  // Create point handlers
+  const handleCreatePoint = async () => {
+    if (!name || !latitude || !longitude || !type) {
+      setSnackbarMessage('Please fill in all fields.');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (isNaN(parseFloat(latitude)) || isNaN(parseFloat(longitude))) {
+      setSnackbarMessage('Coordinates must be numbers');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      await pointService.createPoint({
+        name,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        type,
+        description,
+      });
+
+      resetCreateForm();
+      setOpenCreateDrawer(false);
+      setOpenListDrawer(true);
+
+      setMapKey((prevKey) => prevKey + 1);
+
+      fetchPoints(page, searchTerm);
+    } catch (error) {
+      console.error(error);
+      setSnackbarMessage('Create new point failed');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setName('');
+    setLatitude('');
+    setLongitude('');
+    setType('');
+    setDescription('');
+  };
+
+  const handleOpenCreateForm = () => {
+    setOpenListDrawer(false);
+    setTimeout(() => {
+      setOpenCreateDrawer(true);
+    }, 300); // Match the drawer transition time
+  };
+
+  const handleCloseCreateForm = () => {
+    setOpenCreateDrawer(false);
+    setTimeout(() => {
+      setOpenListDrawer(true);
+    }, 300); // Match the drawer transition time
+    resetCreateForm();
+  };
+
+  const onMapClick = (lat: number, lng: number) => {
+    if (openCreateDrawer) {
+      setLatitude(lat.toString());
+      setLongitude(lng.toString());
+    }
+  };
+
+  // Other handlers
   const handleDelete = async () => {
     if (!selectedPointId) return;
     try {
       await pointService.deletePoint(selectedPointId);
-
-      router.refresh();
+      fetchPoints(page, searchTerm);
+      setMapKey((prevKey) => prevKey + 1);
     } catch (err: any) {
       setError(err.message || 'Failed to delete point');
     } finally {
@@ -105,11 +182,6 @@ const Points = () => {
     }
   };
 
-  // Capitalize first letter
-  const capitalizeString = (string: string) =>
-    string.charAt(0).toUpperCase() + string.slice(1);
-
-  // Open and close dialog delete confirmation
   const handleOpenDialog = (id: string) => {
     setSelectedPointId(id);
     setOpen(true);
@@ -130,16 +202,25 @@ const Points = () => {
     setSelectedPoint(null);
   };
 
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '91vh', overflow: 'hidden' }}>
       <Box sx={{ flex: 1, position: 'relative' }}>
-        <Map moveToCurrentLocation={true} onPointClick={handlePointClick} />
+        <Map
+          key={mapKey}
+          moveToCurrentLocation={true}
+          onPointClick={handlePointClick}
+          onMapClick={onMapClick}
+        />
         {isCardVisible && selectedPoint && (
           <Box
             sx={{
               position: 'absolute',
               top: 20,
-              left: openDrawer ? 430 : 50,
+              left: openListDrawer || openCreateDrawer ? 430 : 50,
               zIndex: 1000,
               transition: 'left 0.3s ease-in-out',
             }}
@@ -148,12 +229,20 @@ const Points = () => {
           </Box>
         )}
       </Box>
+
       <IconButton
-        onClick={() => setOpenDrawer(!openDrawer)}
+        onClick={() => {
+          if (openCreateDrawer || openListDrawer) {
+            setOpenCreateDrawer(false);
+            setOpenListDrawer(false);
+          } else {
+            setOpenListDrawer(true);
+          }
+        }}
         sx={{
           position: 'absolute',
           top: '50%',
-          left: openDrawer ? 397 : -3,
+          left: openListDrawer || openCreateDrawer ? 397 : -3,
           zIndex: 1000,
           backgroundColor: 'white',
           border: '1px solid black',
@@ -164,10 +253,18 @@ const Points = () => {
           transition: 'left 0.3s ease-in-out',
         }}
       >
-        {openDrawer ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+        {openListDrawer || openCreateDrawer ? (
+          <ChevronLeftIcon />
+        ) : (
+          <ChevronRightIcon />
+        )}
       </IconButton>
 
-      <CustomDrawer open={openDrawer} onClose={() => setOpenDrawer(false)}>
+      {/* List Points Drawer */}
+      <CustomDrawer
+        open={openListDrawer}
+        onClose={() => setOpenListDrawer(false)}
+      >
         <Box>
           <Box className="mb-4 mt-2 flex items-center justify-between">
             <Box className="mr-10 flex-grow">
@@ -179,7 +276,7 @@ const Points = () => {
               />
             </Box>
             <IconButton
-              onClick={() => router.push('/points/create')}
+              onClick={handleOpenCreateForm}
               sx={{
                 backgroundColor: 'darkgreen',
                 color: 'white',
@@ -192,11 +289,14 @@ const Points = () => {
               </Tooltip>
             </IconButton>
           </Box>
+
           <PointsList
             points={points}
             isLoading={isLoading}
             error={error}
-            capitalizeString={capitalizeString}
+            capitalizeString={(str: string) =>
+              str.charAt(0).toUpperCase() + str.slice(1)
+            }
             handleOpenDialog={handleOpenDialog}
             handlePointClick={handlePointClick}
           />
@@ -208,17 +308,53 @@ const Points = () => {
               searchKey={searchTerm}
             />
           </Box>
+        </Box>
+      </CustomDrawer>
 
-          {/* Delete Confirmation Dialog */}
-          <ConfirmDeleteDialog
-            open={open}
-            onClose={handleCloseDialog}
-            onConfirm={handleDelete}
-            title="Delete Confirmation"
-            content="Are you sure you want to delete this point permanently?"
+      {/* Create Point Drawer */}
+      <CustomDrawer
+        open={openCreateDrawer}
+        onClose={() => setOpenCreateDrawer(false)}
+      >
+        <Box>
+          <Box className="mb-6 flex items-center">
+            <IconButton onClick={handleCloseCreateForm}>
+              <ArrowBackIcon />
+              <Typography variant='h6'> Back to points</Typography>
+            </IconButton>
+          </Box>
+
+          <PointForm
+            name={name}
+            setName={setName}
+            latitude={latitude}
+            setLatitude={setLatitude}
+            longitude={longitude}
+            setLongitude={setLongitude}
+            type={type}
+            setType={setType}
+            description={description}
+            setDescription={setDescription}
+            onSubmit={handleCreatePoint}
+            submitButtonText="Create Point"
           />
         </Box>
       </CustomDrawer>
+
+      {/* Dialogs and Snackbars */}
+      <ConfirmDeleteDialog
+        open={open}
+        onClose={handleCloseDialog}
+        onConfirm={handleDelete}
+        title="Delete Confirmation"
+        content="Are you sure you want to delete this point permanently?"
+      />
+
+      <SnackbarCustom
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={handleCloseSnackbar}
+      />
     </Box>
   );
 };

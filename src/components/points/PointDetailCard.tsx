@@ -27,10 +27,10 @@ const PointDetailsCard = ({ point, onClose }: PointDetailsCardProps) => {
     <Box
       className="rounded-lg bg-gray-100 p-4"
       sx={{
-        width: '100%',
+        maxHeight: 600,
+        overflowY: 'auto', 
         maxWidth: 400,
-        boxShadow: 3,
-        backgroundColor: 'white',
+        boxShadow: 3,      
       }}
     >
       <Box className="mb-4 flex items-center justify-between">

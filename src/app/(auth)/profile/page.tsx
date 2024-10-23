@@ -1,13 +1,11 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import useSWR from 'swr';
-import { revalidateEvents } from 'swr/_internal';
 import axiosInstance from '../../../../axiosConfig';
 import ProfileLayout from '@/components/auth/myprofile';
-import UserDashboardLayout from '@/components/auth/UserDashboardLayout';
 import Loading from '@/components/Loading';
-import { UpdateMyProfile } from '@/service/authService';
+import RandomBackground from '@/components/RandomBackground'; // Import the RandomBackground component
 
 interface ProfileDTOResponse {
   data: ProfileDTO;
@@ -22,9 +20,10 @@ const Profile: FC = () => {
     address: '',
     dateOfBirth: new Date(''),
   } as ProfileDTO;
+
   const fetcher = (url: string) => axiosInstance.get<ProfileDTOResponse>(url);
 
-  const { data, isLoading, isValidating } = useSWR(
+  const { data, isLoading } = useSWR(
     'authentication-service/profile',
     fetcher,
     {
@@ -33,14 +32,16 @@ const Profile: FC = () => {
       revalidateOnReconnect: true,
     }
   );
-  // console.log(data?.data.data);
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Handle form submission logic here
-  };
+
   if (isLoading) return <Loading />;
 
-  return <ProfileLayout profile={data?.data.data || defaultProfile} />;
+  return (
+    <RandomBackground>
+      {' '}
+      {/* Wrap the ProfileLayout with RandomBackground */}
+      <ProfileLayout profile={data?.data.data || defaultProfile} />
+    </RandomBackground>
+  );
 };
 
 export default Profile;

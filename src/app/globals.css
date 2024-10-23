@@ -15,7 +15,7 @@ body {
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   padding-top: 64px;
 }
-header{
+header {
   position: fixed;
   z-index: 1100;
 }
