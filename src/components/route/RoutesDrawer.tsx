@@ -24,6 +24,9 @@ import Loading from '@/components/Loading';
 import CustomDrawer from '../Drawer';
 import SearchInput from '../geo/SearchInput';
 import { useRouter } from 'next/navigation';
+import { Permission } from '@/app/lib/enum';
+import { RootState, useAppDispatch } from '@/store/store';
+import { useSelector } from 'react-redux';
 
 interface RoutesDrawerProps {
   open: boolean;
@@ -59,6 +62,8 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
   onAddNewRoute,
 }) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const permission = useSelector((state: RootState) => state.user.permissions);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -68,6 +73,10 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
 
   const handleRowClick = (routeId: string) => {
     handleCheckboxChange(routeId);
+  };
+
+  const hasPermission = (permissionRequired: string) => {
+    return permission.includes(permissionRequired);
   };
 
   return (
@@ -81,19 +90,21 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
             onKeyDown={handleKeyPress}
           />
         </Box>
-        <IconButton
-          onClick={onAddNewRoute}
-          sx={{
-            backgroundColor: 'darkgreen',
-            color: 'white',
-            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-          }}
-          size="small"
-        >
-          <Tooltip title="Add new route" arrow>
-            <AddIcon fontSize="small" />
-          </Tooltip>
-        </IconButton>
+        {hasPermission(Permission.CREATE_ROUTE) && (
+          <IconButton
+            onClick={onAddNewRoute}
+            sx={{
+              backgroundColor: 'darkgreen',
+              color: 'white',
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+            }}
+            size="small"
+          >
+            <Tooltip title="Add new route" arrow>
+              <AddIcon fontSize="small" />
+            </Tooltip>
+          </IconButton>
+        )}
       </Box>
 
       <Box sx={{ height: '520px', overflow: 'auto' }}>
@@ -167,25 +178,29 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
                     <TableCell>{route.distance}</TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center">
-                        <IconButton
-                          onClick={() =>
-                            router.push(`/routes/${route.id}/edit`)
-                          }
-                        >
-                          <Tooltip title="Edit route" arrow>
-                            <EditIcon />
-                          </Tooltip>
-                        </IconButton>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(route.id);
-                          }}
-                        >
-                          <Tooltip title="Remove route" arrow>
-                            <DeleteIcon />
-                          </Tooltip>
-                        </IconButton>
+                        {hasPermission(Permission.UPDATE_ROUTE) && (
+                          <IconButton
+                            onClick={() =>
+                              router.push(`/routes/${route.id}/edit`)
+                            }
+                          >
+                            <Tooltip title="Edit route" arrow>
+                              <EditIcon />
+                            </Tooltip>
+                          </IconButton>
+                        )}
+                        {hasPermission(Permission.DELETE_ROUTE) && (
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(route.id);
+                            }}
+                          >
+                            <Tooltip title="Remove route" arrow>
+                              <DeleteIcon />
+                            </Tooltip>
+                          </IconButton>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>

@@ -324,6 +324,7 @@ const MapContent = ({
           show: false,
           createMarker: () => null,
         } as any);
+        
 
         routingControl.addTo(mapRef.current);
         routingControlsRef.current[route.id] = routingControl;

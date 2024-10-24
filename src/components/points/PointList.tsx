@@ -16,6 +16,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/navigation';
 import { Delete, Edit } from '@mui/icons-material';
 import Loading from '../Loading';
+import { Permission } from '@/app/lib/enum';
 
 interface PointsListProps {
   points: PointDTO[];
@@ -24,6 +25,7 @@ interface PointsListProps {
   capitalizeString: (str: string) => string;
   handleOpenDialog: (id: string) => void;
   handlePointClick: (point: PointDTO) => void;
+  hasPermission: (permission: string) => boolean;
 }
 
 const PointsList = ({
@@ -33,6 +35,7 @@ const PointsList = ({
   capitalizeString,
   handleOpenDialog,
   handlePointClick,
+  hasPermission,
 }: PointsListProps) => {
   const router = useRouter();
 
@@ -83,14 +86,20 @@ const PointsList = ({
 
                   <TableCell>
                     <Box>
-                      <IconButton
-                        onClick={() => router.push(`/points/${point.id}/edit`)}
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton onClick={() => handleOpenDialog(point.id)}>
-                        <Delete />
-                      </IconButton>
+                      {hasPermission(Permission.UPDATE_POINT) && (
+                        <IconButton
+                          onClick={() =>
+                            router.push(`/points/${point.id}/edit`)
+                          }
+                        >
+                          <Edit />
+                        </IconButton>
+                      )}
+                      {hasPermission(Permission.DELETE_POINT) && (
+                        <IconButton onClick={() => handleOpenDialog(point.id)}>
+                          <Delete />
+                        </IconButton>
+                      )}
                     </Box>
                   </TableCell>
                 </TableRow>
