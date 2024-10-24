@@ -12,14 +12,16 @@ interface TabSwitcherProps {}
 const cardList = [
   {
     title: 'Demo 1',
-    name: 'Demo add list',
-    content: 'Content for Tab 1',
-    url: 'login',
+    name: 'As a guest',
+    content:
+      'Guest register, after that, login and view route, update profile and last one, they are also can recovery their password',
+    url: 'register',
   },
   {
     title: 'Demo 2',
-    name: 'Demo remove list',
-    content: 'Content for Tab 2',
+    name: 'As a user',
+    content:
+      'Admin loggin and create the role, after that, I assign this role for user, user will login and using their permission',
     url: 'login',
   },
   {
