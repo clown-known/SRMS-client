@@ -8,8 +8,8 @@ const ConfirmButton = ({ onClick }: ConfirmButtonProps) => {
   return (
     <button
       type="button"
-      onClick={onClick}
-      autoFocus className="rounded-lg bg-red-300 px-5 py-3 text-center text-sm font-medium text-red-700 hover:bg-red-400 focus:outline-none focus:ring-4 focus:ring-red-200">
+      className="transform rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-red-300 active:translate-y-0.5"
+    >
       Yes
     </button>
   );

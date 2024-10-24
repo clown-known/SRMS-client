@@ -2,12 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  Box,
-  Button,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Button, Typography, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import dynamic from 'next/dynamic';
 import { calculateDistance } from '@/utils/distanceUtils';
@@ -48,12 +43,12 @@ const RouteEdit = () => {
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
-  const [isCardVisible, setIsCardVisible] = useState(false)
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   const fetchPoints = async (search: string = '') => {
     try {
       setIsLoading(true);
-      const response = await pointService.getAllPoints(1, 10, search); 
+      const response = await pointService.getAllPoints(1, 50, search);
 
       if (response && response.data && response.data.data) {
         setPoints(response.data.data);
@@ -78,14 +73,17 @@ const RouteEdit = () => {
     setDialogOpen(false);
   };
 
-  const debouncedFetchPoints = debounceFetching((search: string) => {
-    fetchPoints(search);
-  }, 2000);
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = event.target.value;
-    setSearchTerm(searchTerm);
-    debouncedFetchPoints(searchTerm);
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      fetchPoints(searchTerm);
+    }
   };
 
   const updateRouteOnMap = useCallback(
@@ -123,7 +121,7 @@ const RouteEdit = () => {
         }
         updateRouteOnMap(point, null);
       } else {
-        setEndPointId(point.id); 
+        setEndPointId(point.id);
         setEndPointName(point.name);
         if (startPointId) {
           const distance = calculateDistance(
@@ -134,7 +132,7 @@ const RouteEdit = () => {
           );
           setDistance(distance.toFixed(2));
           const estimatedTime = calculateTime(distance);
-          setEstimatedTime(estimatedTime); 
+          setEstimatedTime(estimatedTime);
         }
         updateRouteOnMap(null, point);
       }
@@ -316,7 +314,8 @@ const RouteEdit = () => {
             onClose={handleCloseDialog}
             dialogType={dialogType}
             searchTerm={searchTerm}
-            handleSearch={handleSearch}
+            handleSearch={handleSearchChange}
+            handleKeyDown={handleSearchKeyDown}
             isLoading={isLoading}
             error={error}
             points={points}

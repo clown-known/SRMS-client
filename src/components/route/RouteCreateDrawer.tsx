@@ -2,18 +2,12 @@
 
 import React, { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
-import {
-  Box,
-  Button,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Button, Typography, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { pointService } from '@/service/pointService';
 import { CreateRouteDTO, routeService } from '@/service/routeService';
 import { calculateDistance } from '@/utils/distanceUtils';
 import { calculateTime } from '@/utils/TimeUtils';
-import { debounceFetching } from '@/utils/debounceFetch';
 import SnackbarCustom from '@/components/Snackbar';
 import CustomDrawer from '@/components/Drawer';
 import PointSelectionDialog from '@/components/route/PointSelection';
@@ -26,7 +20,11 @@ interface RouteCreateProps {
   onRouteCreated: () => void;
 }
 
-const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated }) => {
+const RouteCreate: React.FC<RouteCreateProps> = ({
+  open,
+  onClose,
+  onRouteCreated,
+}) => {
   const [description, setDescription] = useState('');
   const [points, setPoints] = useState<PointDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +47,7 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
   const fetchPoints = async (search: string = '') => {
     try {
       setIsLoading(true);
-      const response = await pointService.getAllPoints(1, 10, search);
+      const response = await pointService.getAllPoints(1, 50, search);
 
       if (response.data && response.data.data) {
         setPoints(response.data.data);
@@ -76,14 +74,17 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
     setDialogOpen(false);
   };
 
-  const debouncedFetchPoints = debounceFetching((search: string) => {
-    fetchPoints(search);
-  }, 2000);
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = event.target.value;
-    setSearchTerm(searchTerm);
-    debouncedFetchPoints(searchTerm);
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      fetchPoints(searchTerm);
+    }
   };
 
   const handleSelectPoint = useCallback(
@@ -95,8 +96,8 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
           const distance = calculateDistance(
             point.latitude,
             point.longitude,
-            points.find(p => p.id === endPointId)?.latitude || 0,
-            points.find(p => p.id === endPointId)?.longitude || 0
+            points.find((p) => p.id === endPointId)?.latitude || 0,
+            points.find((p) => p.id === endPointId)?.longitude || 0
           );
           const estimatedTime = calculateTime(distance);
           setEstimatedTime(estimatedTime);
@@ -107,8 +108,8 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
         setEndPointName(point.name);
         if (startPointId) {
           const distance = calculateDistance(
-            points.find(p => p.id === startPointId)?.latitude || 0,
-            points.find(p => p.id === startPointId)?.longitude || 0,
+            points.find((p) => p.id === startPointId)?.latitude || 0,
+            points.find((p) => p.id === startPointId)?.longitude || 0,
             point.latitude,
             point.longitude
           );
@@ -126,7 +127,9 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
     event.preventDefault();
 
     if (!routeName || !startPointId || !endPointId || !distance) {
-      setSnackbarMessage('Please fill in all fields before creating the route.');
+      setSnackbarMessage(
+        'Please fill in all fields before creating the route.'
+      );
       setSnackbarOpen(true);
       return;
     }
@@ -197,7 +200,8 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
           onClose={handleCloseDialog}
           dialogType={dialogType}
           searchTerm={searchTerm}
-          handleSearch={handleSearch}
+          handleSearch={handleSearchChange}
+          handleKeyDown={handleSearchKeyDown}
           isLoading={isLoading}
           error={error}
           points={points}

@@ -19,7 +19,7 @@ import PointsList from '@/components/points/PointList';
 import PointForm from '@/components/points/PointForm';
 import SnackbarCustom from '@/components/Snackbar';
 import { Permission } from '@/app/lib/enum';
-import { useAppDispatch } from '@/store/store';
+import { RootState, useAppDispatch } from '@/store/store';
 import { useSelector } from 'react-redux';
 
 // Load the map component
