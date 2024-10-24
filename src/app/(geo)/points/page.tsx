@@ -9,6 +9,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+import { useSelector } from 'react-redux';
 import PaginationCustom from '@/components/Pagination';
 import CustomDrawer from '@/components/Drawer';
 import ConfirmDeleteDialog from '@/components/geo/ConfirmDialog';
@@ -20,7 +21,7 @@ import PointForm from '@/components/points/PointForm';
 import SnackbarCustom from '@/components/Snackbar';
 import { Permission } from '@/app/lib/enum';
 import { RootState, useAppDispatch } from '@/store/store';
-import { useSelector } from 'react-redux';
+
 
 // Load the map component
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
@@ -43,7 +44,7 @@ const Points = () => {
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
   const [isCardVisible, setIsCardVisible] = useState(false);
 
-  // Create point states
+  // Create point states vao discord
   const [openCreateDrawer, setOpenCreateDrawer] = useState(false);
 
   // Form states
@@ -105,7 +106,13 @@ const Points = () => {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleSearchSubmit();
   };
-
+  const resetCreateForm = () => {
+    setName('');
+    setLatitude('');
+    setLongitude('');
+    setType('');
+    setDescription('');
+  };
   // Create point handlers
   const handleCreatePoint = async () => {
     if (!name || !latitude || !longitude || !type) {
@@ -143,14 +150,6 @@ const Points = () => {
     }
   };
 
-  const resetCreateForm = () => {
-    setName('');
-    setLatitude('');
-    setLongitude('');
-    setType('');
-    setDescription('');
-  };
-
   const handleOpenCreateForm = () => {
     setOpenListDrawer(false);
     setTimeout(() => {
@@ -172,20 +171,6 @@ const Points = () => {
       setLongitude(lng.toString());
     }
   };
-
-  const handleDelete = async () => {
-    if (!selectedPointId) return;
-    try {
-      await pointService.deletePoint(selectedPointId);
-      fetchPoints(page, searchTerm);
-      setMapKey((prevKey) => prevKey + 1);
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete point');
-    } finally {
-      handleCloseDialog();
-    }
-  };
-
   const handleOpenDialog = (id: string) => {
     setSelectedPointId(id);
     setOpen(true);
@@ -195,7 +180,7 @@ const Points = () => {
     setOpen(false);
     setSelectedPointId(null);
   };
-
+  // where
   const handlePointClick = (point: PointDTO) => {
     setSelectedPoint(point);
     setIsCardVisible(true);
@@ -209,7 +194,18 @@ const Points = () => {
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
-
+  const handleDelete = async () => {
+    if (!selectedPointId) return;
+    try {
+      await pointService.deletePoint(selectedPointId);
+      fetchPoints(page, searchTerm);
+      setMapKey((prevKey) => prevKey + 1);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete point');
+    } finally {
+      handleCloseDialog();
+    }
+  };
   const hasPermission = (permissionRequired: string) => {
     return permission.includes(permissionRequired);
   };
@@ -219,7 +215,7 @@ const Points = () => {
       <Box sx={{ flex: 1, position: 'relative' }}>
         <Map
           key={mapKey}
-          moveToCurrentLocation={true}
+          moveToCurrentLocation
           onPointClick={handlePointClick}
           onMapClick={onMapClick}
         />

@@ -1,3 +1,5 @@
+/* eslint-disable react/require-default-props */
+
 'use client';
 
 import React, {
@@ -6,6 +8,8 @@ import React, {
   useCallback,
   useRef,
   useMemo,
+  SetStateAction,
+  Dispatch,
 } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -159,7 +163,6 @@ const MapContent = ({
       if (onPointClick) {
         onPointClick(point);
       }
-
       const newCenter: [number, number] = [point.latitude, point.longitude];
 
       mapRef.current.setView(newCenter, DEFAULT_ZOOM, {
@@ -324,7 +327,6 @@ const MapContent = ({
           show: false,
           createMarker: () => null,
         } as any);
-        
 
         routingControl.addTo(mapRef.current);
         routingControlsRef.current[route.id] = routingControl;
@@ -451,7 +453,7 @@ const MapContent = ({
 
       {markerPosition && (
         <Marker position={markerPosition} icon={blueIcon}>
-          <Popup>{markerAddress ? markerAddress : 'Unknown place'}</Popup>
+          <Popup>{markerAddress || 'Unknown place'}</Popup>
         </Marker>
       )}
 
@@ -476,9 +478,9 @@ const Map = ({
       zoom={DEFAULT_ZOOM}
       style={{ height: '100vh', width: '100%' }}
       attributionControl={false}
-      zoomControl={true}
+      zoomControl
       doubleClickZoom={false}
-      scrollWheelZoom={true}
+      scrollWheelZoom
     >
       <MapContent
         center={center}
