@@ -89,9 +89,13 @@ export default function RoleTable({
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [roleToEdit, setRoleToEdit] = useState<RoleDTO | null>(null);
 
-  const hasPermission = (permission: string) => {
+  const isSuperAdmin = useSelector(
+    (state: RootState) => state.user.isSuperAdmin
+  );
+  const hasPermission = (permissionRequired: string) => {
+    if (isSuperAdmin) return true;
     if (userPermissions?.length === 0) return false;
-    return userPermissions?.includes(permission);
+    return userPermissions?.includes(permissionRequired);
   };
   const handleDeleteClick = (id: string) => {
     setRoleToDelete(id);
@@ -151,7 +155,8 @@ export default function RoleTable({
                   </StyledTableCell>
                   <StyledTableCell>
                     {hasPermission('role:update') &&
-                      !isSameRoleOfUser(role?.id) && (
+                      !isSameRoleOfUser(role?.id) &&
+                      !role.isAdmin && (
                         <Tooltip title="Edit">
                           <IconButton onClick={() => handleEditClick(role)}>
                             <Edit />
@@ -159,7 +164,8 @@ export default function RoleTable({
                         </Tooltip>
                       )}
                     {hasPermission('role:delete') &&
-                      !isSameRoleOfUser(role?.id) && (
+                      !isSameRoleOfUser(role?.id) &&
+                      !role.isAdmin && (
                         <Tooltip title="Delete">
                           <IconButton
                             onClick={() => handleDeleteClick(role.id)}
