@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { getRoles, RolesPage } from '@/service/roleService';
 import AccountPageContent from '@/components/account/AccountPageContent';
 import {
@@ -11,6 +12,8 @@ import Loading from '@/components/Loading';
 import { Permission } from '@/app/lib/enum';
 import RandomBackground from '@/components/RandomBackground';
 import withPermission from '@/hoc/withPermission';
+import { RootState, useAppDispatch } from '@/store/store';
+import { fetchUserPermissions } from '@/store/userSlice';
 
 function AccountsPage() {
   const [initialAccounts, setInitialAccounts] = useState<IAccountPage>({
@@ -36,15 +39,31 @@ function AccountsPage() {
     },
   });
   const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const dispatch = useAppDispatch();
+  const permission = useSelector((state: RootState) => state.user.permissions);
+  useEffect(() => {
+    dispatch(fetchUserPermissions() as any);
+    setIsLoading(false);
+  }, [dispatch]);
 
+  const isSuperAdmin = useSelector(
+    (state: RootState) => state.user.isSuperAdmin
+  );
+  const hasPermission = (permissionRequired: string) => {
+    if (isSuperAdmin) return true;
+    if (permission.length === 0) return false;
+    return permission.includes(permissionRequired);
+  };
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true); // Set loading to true before fetching
       try {
-        const accountsData = await getAccounts();
-        setInitialAccounts(accountsData);
-        const rolesData = await getRoles();
-        setInitialRoles(rolesData);
+        // const accountsData = await getAccounts();
+        // setInitialAccounts(accountsData);
+        if (hasPermission(Permission.READ_ROLE)) {
+          const rolesData = await getRoles();
+          setInitialRoles(rolesData);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

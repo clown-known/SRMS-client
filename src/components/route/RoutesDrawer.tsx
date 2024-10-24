@@ -19,14 +19,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { grey } from '@mui/material/colors';
+import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import PaginationCustom from '@/components/Pagination';
 import Loading from '@/components/Loading';
 import CustomDrawer from '../Drawer';
 import SearchInput from '../geo/SearchInput';
-import { useRouter } from 'next/navigation';
 import { Permission } from '@/app/lib/enum';
 import { RootState, useAppDispatch } from '@/store/store';
-import { useSelector } from 'react-redux';
 
 interface RoutesDrawerProps {
   open: boolean;
@@ -75,7 +75,12 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
     handleCheckboxChange(routeId);
   };
 
+  const isSuperAdmin = useSelector(
+    (state: RootState) => state.user.isSuperAdmin
+  );
   const hasPermission = (permissionRequired: string) => {
+    if (isSuperAdmin) return true;
+    if (permission.length === 0) return false;
     return permission.includes(permissionRequired);
   };
 
@@ -115,10 +120,7 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
             <Table stickyHeader sx={{ minWidth: 650 }} size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell
-                    padding="checkbox"
-                    sx={{ width: '1%' }}
-                  ></TableCell>
+                  <TableCell padding="checkbox" sx={{ width: '1%' }} />
                   <TableCell sx={{ width: '25%' }}>Name</TableCell>
                   <TableCell sx={{ width: '25%' }}>Start Point</TableCell>
                   <TableCell sx={{ width: '25%' }}>End Point</TableCell>

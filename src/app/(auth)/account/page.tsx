@@ -1,7 +1,6 @@
 'use client';
 
-import { FC, useState } from 'react';
-import useSWR from 'swr';
+import { FC, useEffect, useState } from 'react';
 import axiosInstance from '../../../../axiosConfig';
 import Loading from '@/components/Loading';
 import ChangePasswordModal from '@/components/auth/ChangePasswordModal';
@@ -20,18 +19,8 @@ const Account: FC = () => {
     open: false,
     message: '',
   });
-
-  const fetcher = (url: string) => axiosInstance.get<AccountDTOResponse>(url);
-
-  const { data, isLoading, isValidating } = useSWR(
-    'authentication-service/auth/my-account',
-    fetcher,
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
-  );
+  const [accountData, setAccountData] = useState<AccountDTO | null>(null); // State for account data
+  const [loading, setLoading] = useState(true); // State for loading
 
   const handleChangePassword = () => {
     setIsModalOpen(true);
@@ -49,6 +38,21 @@ const Account: FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const fetchAccountData = async () => {
+    try {
+      const response = await axiosInstance.get<AccountDTOResponse>(
+        'authentication-service/auth/my-account'
+      );
+      setAccountData(response.data.data); // Set the account data
+    } catch (error) {
+      showSnackbar('Failed to load account data.'); // Show error message
+    } finally {
+      setLoading(false); // Set loading to false after fetching
+    }
+  };
+  useEffect(() => {
+    fetchAccountData(); // Call the fetch function
+  }, []);
   const handleSubmitPasswordChange = async (
     oldPassword: string,
     newPassword: string,
@@ -60,7 +64,7 @@ const Account: FC = () => {
     }
 
     try {
-      if (data) {
+      if (accountData) {
         await changePassword({ newPassword, oldPassword });
         showSnackbar('Password changed successfully');
         setIsModalOpen(false);
@@ -70,11 +74,10 @@ const Account: FC = () => {
     }
   };
 
-  if (isLoading || isValidating) return <Loading />;
+  if (loading) return <Loading />; // Show loading indicator
 
   return (
     <RandomBackground className="items-center justify-center">
-      {' '}
       {/* Wrap the content with RandomBackground */}
       <div className="flex min-h-screen items-center justify-center">
         <div className="mx-auto w-full max-w-2xl rounded-lg bg-white p-10 shadow-lg">
@@ -83,16 +86,16 @@ const Account: FC = () => {
           </h2>
           <div className="mb-5">
             <p className="text-sm font-medium text-gray-500">ID</p>
-            <p className="text-lg text-gray-900">{data?.data.data.id}</p>
+            <p className="text-lg text-gray-900">{accountData?.id}</p>
           </div>
           <div className="mb-5">
             <p className="text-sm font-medium text-gray-500">Email</p>
-            <p className="text-lg text-gray-900">{data?.data.data.email}</p>
+            <p className="text-lg text-gray-900">{accountData?.email}</p>
           </div>
           <div className="mb-8">
             <p className="text-sm font-medium text-gray-500">Role</p>
             <p className="text-lg text-gray-900">
-              {data?.data.data.role?.name || 'None'}
+              {accountData?.role?.name || 'None'}
             </p>
           </div>
           <button

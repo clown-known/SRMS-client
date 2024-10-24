@@ -95,10 +95,15 @@ export default function AccountTable({
   const [assignRoleAccount, setAssignRoleAccount] = useState<AccountDTO | null>(
     null
   );
-
-  const hasPermission = (permission: string) => {
-    return userPermissions.includes(permission);
+  const isSuperAdmin = useSelector(
+    (state: RootState) => state.user.isSuperAdmin
+  );
+  const hasPermission = (permissionRequired: string) => {
+    if (isSuperAdmin) return true;
+    if (userPermissions.length === 0) return false;
+    return userPermissions.includes(permissionRequired);
   };
+
   const isSameRoleOfUser = (roleId?: string) => roleId === userRoleId;
   const handleResetPasswordClick = (account: AccountDTO) => {
     setResetPasswordAccount(account);
@@ -180,15 +185,18 @@ export default function AccountTable({
                   </StyledTableCell>
                   <StyledTableCell>{account.role?.name}</StyledTableCell>
                   <StyledTableCell>
-                    <AccountActions
-                      account={account}
-                      hasPermission={hasPermission}
-                      isSameRoleOfUser={isSameRoleOfUser}
-                      onEdit={handleEditClick}
-                      onAssignRole={handleAssignRoleClick}
-                      onResetPassword={handleResetPasswordClick}
-                      onDelete={handleDeleteClick}
-                    />
+                    {account.role?.isAdmin &&
+                    account.role?.isAdmin === true ? null : ( // Check if isAdmin is true
+                      <AccountActions
+                        account={account}
+                        hasPermission={hasPermission}
+                        isSameRoleOfUser={isSameRoleOfUser}
+                        onEdit={handleEditClick}
+                        onAssignRole={handleAssignRoleClick}
+                        onResetPassword={handleResetPasswordClick}
+                        onDelete={handleDeleteClick}
+                      />
+                    )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}

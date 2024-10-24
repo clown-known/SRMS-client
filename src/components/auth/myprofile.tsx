@@ -4,6 +4,7 @@ import { FC, useEffect, useState } from 'react';
 import { UpdateMyProfile } from '@/service/authService';
 import { useAppDispatch } from '@/store/store';
 import { changeNameState } from '@/store/userSlice';
+import SnackbarCustom from '@/components/Snackbar'; // Import SnackbarCustom
 
 interface IProps {
   profile: ProfileDTO;
@@ -20,6 +21,9 @@ const ProfileLayout: FC<IProps> = (props: IProps) => {
     address: profile.address,
   });
 
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // State for snackbar
+  const [snackbarMessage, setSnackbarMessage] = useState(''); // State for snackbar message
+
   const dispatch = useAppDispatch();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,12 +39,19 @@ const ProfileLayout: FC<IProps> = (props: IProps) => {
         username: `${formData.firstName} ${formData.lastName}`,
       })
     );
-    if (response?.status === 200) alert('succes!');
-    // Handle form submission logic here
+    if (response?.status === 200) {
+      setSnackbarMessage('Profile updated successfully!'); // Set success message
+      setSnackbarOpen(true); // Open snackbar
+    } else {
+      setSnackbarMessage('Failed to update profile.'); // Set error message
+      setSnackbarOpen(true); // Open snackbar
+    }
   };
+
   const formattedDate = new Date(formData.dateOfBirth)
     .toISOString()
     .split('T')[0];
+
   return (
     <div className="bg-gray-1000 flex min-h-screen items-center justify-center">
       <form
@@ -149,6 +160,11 @@ const ProfileLayout: FC<IProps> = (props: IProps) => {
           Save Profile
         </button>
       </form>
+      <SnackbarCustom
+        open={snackbarOpen}
+        message={snackbarMessage}
+        onClose={() => setSnackbarOpen(false)} // Close snackbar
+      />
     </div>
   );
 };

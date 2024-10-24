@@ -114,6 +114,10 @@ interface UpdateProfileRequest{
 interface UpdateProfileResponse extends BaseResponse<ProfileDTO>{
 
 }
+export const MyProfile = async () => {
+    const response = await axiosInstance.get('authentication-service/profile');
+    return response;
+}
 export const UpdateMyProfile = async (data:UpdateProfileRequest) => {
   try {
     const response = await axiosInstance.put<UpdateProfileResponse>('authentication-service/profile',data);
