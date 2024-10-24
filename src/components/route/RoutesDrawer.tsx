@@ -123,7 +123,10 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
                   <TableCell sx={{ width: '25%' }}>Start Point</TableCell>
                   <TableCell sx={{ width: '25%' }}>End Point</TableCell>
                   <TableCell sx={{ width: '20%' }}>Distance (km)</TableCell>
-                  <TableCell sx={{ width: '1%' }}>Actions</TableCell>
+                  {hasPermission(Permission.UPDATE_ROUTE) &&
+                    hasPermission(Permission.DELETE_ROUTE) && (
+                      <TableCell sx={{ width: '1%' }}>Actions</TableCell>
+                    )}
                 </TableRow>
               </TableHead>
               <TableBody>

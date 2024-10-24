@@ -92,40 +92,34 @@ const RouteCreate: React.FC<RouteCreateProps> = ({ open, onClose, onRouteCreated
         setStartPointId(point.id);
         setStartPointName(point.name);
         if (endPointId) {
-          const endPoint = points.find((p) => p.id === endPointId);
-          if (endPoint) {
-            const distance = calculateDistance(
-              point.latitude,
-              point.longitude,
-              endPoint.latitude,
-              endPoint.longitude
-            );
-            const estimatedTime = calculateTime(distance);
-            setEstimatedTime(estimatedTime);
-            setDistance(distance.toFixed(2));
-          }
+          const distance = calculateDistance(
+            point.latitude,
+            point.longitude,
+            points.find(p => p.id === endPointId)?.latitude || 0,
+            points.find(p => p.id === endPointId)?.longitude || 0
+          );
+          const estimatedTime = calculateTime(distance);
+          setEstimatedTime(estimatedTime);
+          setDistance(distance.toFixed(2));
         }
       } else {
         setEndPointId(point.id);
         setEndPointName(point.name);
         if (startPointId) {
-          const startPoint = points.find((p) => p.id === startPointId);
-          if (startPoint) {
-            const distance = calculateDistance(
-              startPoint.latitude,
-              startPoint.longitude,
-              point.latitude,
-              point.longitude
-            );
-            setDistance(distance.toFixed(2));
-            const estimatedTime = calculateTime(distance);
-            setEstimatedTime(estimatedTime);
-          }
+          const distance = calculateDistance(
+            points.find(p => p.id === startPointId)?.latitude || 0,
+            points.find(p => p.id === startPointId)?.longitude || 0,
+            point.latitude,
+            point.longitude
+          );
+          setDistance(distance.toFixed(2));
+          const estimatedTime = calculateTime(distance);
+          setEstimatedTime(estimatedTime);
         }
       }
       handleCloseDialog();
     },
-    [dialogType, endPointId, points, startPointId]
+    [dialogType, endPointId, startPointId, points]
   );
 
   const handleCreateRoute = async (event: React.FormEvent) => {

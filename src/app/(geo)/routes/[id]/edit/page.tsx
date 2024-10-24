@@ -111,42 +111,36 @@ const RouteEdit = () => {
         setStartPointId(point.id);
         setStartPointName(point.name);
         if (endPointId) {
-          const endPoint = points.find((p) => p.id === endPointId);
-          if (endPoint) {
-            const distance = calculateDistance(
-              point.latitude,
-              point.longitude,
-              endPoint.latitude,
-              endPoint.longitude
-            );
-            const estimatedTime = calculateTime(distance);
-            setEstimatedTime(estimatedTime);
-            setDistance(distance.toFixed(2));
-          }
+          const distance = calculateDistance(
+            point.latitude,
+            point.longitude,
+            route?.endPoint.latitude || 0,
+            route?.endPoint.longitude || 0
+          );
+          const estimatedTime = calculateTime(distance);
+          setEstimatedTime(estimatedTime);
+          setDistance(distance.toFixed(2));
         }
         updateRouteOnMap(point, null);
       } else {
-        setEndPointId(point.id);
+        setEndPointId(point.id); 
         setEndPointName(point.name);
         if (startPointId) {
-          const startPoint = points.find((p) => p.id === startPointId);
-          if (startPoint) {
-            const distance = calculateDistance(
-              startPoint.latitude,
-              startPoint.longitude,
-              point.latitude,
-              point.longitude
-            );
-            setDistance(distance.toFixed(2));
-            const estimatedTime = calculateTime(distance);
-            setEstimatedTime(estimatedTime);
-          }
+          const distance = calculateDistance(
+            route?.startPoint.latitude || 0,
+            route?.startPoint.longitude || 0,
+            point.latitude,
+            point.longitude
+          );
+          setDistance(distance.toFixed(2));
+          const estimatedTime = calculateTime(distance);
+          setEstimatedTime(estimatedTime); 
         }
         updateRouteOnMap(null, point);
       }
       handleCloseDialog();
     },
-    [dialogType, endPointId, points, startPointId, updateRouteOnMap]
+    [dialogType, endPointId, startPointId, route, updateRouteOnMap]
   );
 
   useEffect(() => {
