@@ -40,7 +40,7 @@ const PointsList = ({
   const router = useRouter();
 
   return (
-    <Box className="mt-6">
+    <Box className="mt-6" sx={{ width: '100%', overflowX: 'hidden'}}>
       {isLoading && <Loading />}
       {error && <Typography color="error">{error}</Typography>}
       {!isLoading && !error && points.length === 0 && (
