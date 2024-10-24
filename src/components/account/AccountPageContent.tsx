@@ -179,12 +179,12 @@ export default function AccountPageContent({
     setSnackbarOpen(false);
   };
 
-  useEffect(() => {
-    const searchTerm = searchParams.get('search') || '';
-    const currentPage = parseInt(searchParams.get('page') || '1', 10);
-    setPage(currentPage);
-    fetchAccounts(searchTerm, currentPage);
-  }, [fetchAccounts, searchParams]);
+  // useEffect(() => {
+  //   const searchTerm = searchParams.get('search') || '';
+  //   const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  //   setPage(currentPage);
+  //   fetchAccounts(searchTerm, currentPage);
+  // }, [fetchAccounts, searchParams]);
 
   return (
     <div className="bg-gray-100 px-4 py-4">

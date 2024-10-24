@@ -13,7 +13,7 @@ const Features = () => {
         />
       ),
       title: 'Shipping Route Management Web App',
-      desc: 'We care about the quality of the product. As a digital product development agency, we believe in beautiful software.',
+      desc: 'A website that allows users to easily operate, manage resources, and view routes, we believe you will be satisfied with this.',
     },
     {
       // Updated to use the provided image
@@ -25,7 +25,7 @@ const Features = () => {
         />
       ),
       title: 'Auth Service',
-      desc: 'We use the modern and most flexible and secure technologies to build the best products on the internet.',
+      desc: 'Protecting your account and control is also our goal',
     },
     {
       // Updated to use the provided image
@@ -37,7 +37,7 @@ const Features = () => {
         />
       ),
       title: 'Route Service',
-      desc: 'At Software Security Solutions our mission is to raise the bar by making computer security more accessible.',
+      desc: 'Easily search for points and routes in our system, we also provide you with effective solutions to manage it.',
     },
     {
       // Updated to use the provided image
@@ -49,12 +49,17 @@ const Features = () => {
         />
       ),
       title: 'Notification Service',
-      desc: 'At Software Security Solutions our mission is to raise the bar by making computer security more accessible.',
+      desc: 'When there are any changes to your account, it will immediately notify your email address. Please check your email regularly.',
     },
   ];
 
   return (
     <SectionWrapper>
+      <div className="mx-auto max-w-2xl space-y-3 pb-12 sm:text-center">
+        <h2 className="pb-12 text-3xl font-semibold text-gray-200 sm:text-4xl">
+          We have four CORES feature
+        </h2>
+      </div>
       <div id="features" className="custom-screen px-20 text-gray-200">
         <ul className="grid gap-x-12 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((item, idx) => (

@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { register } from '@/service/authService';
 import { loginState } from '@/store/userSlice';
 import CustomSnackbar from '@/components/CustomSnackbar';
+import withoutAuth from '@/hoc/withoutAuth';
 
 const Register: FC = () => {
   const dispatch = useDispatch();
@@ -255,4 +256,5 @@ const Register: FC = () => {
   );
 };
 
-export default Register;
+export default withoutAuth(Register);
+// export default Register;

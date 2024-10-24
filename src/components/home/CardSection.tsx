@@ -69,7 +69,17 @@ const CardSection: React.FC<TabSwitcherProps> = () => {
   return (
     <div className="" ref={sectionRef}>
       <div className="h-16" />
-      <div className="text-center text-gray-100"> DEMOOOO</div>
+      <div className="text-center text-gray-100">
+        <div className="max-w-2xl sm:text-center md:mx-auto">
+          <h2 className="text-3xl font-semibold text-gray-100 sm:text-4xl">
+            Our Demo
+          </h2>
+          <p className="mt-3 text-gray-200">
+            Today, We bring here four scenarios to demo with you, please don't
+            hesitate to ask questions.
+          </p>
+        </div>
+      </div>
       <ThemeProvider theme={theme}>
         <div className="flex flex-col items-center p-4">
           {/* Material UI Tabs */}
@@ -98,7 +108,6 @@ const CardSection: React.FC<TabSwitcherProps> = () => {
               ))}
             </Tabs>
           </Box>
-
           {/* Tab content */}
           <div className="mt-4 w-full rounded-lg border bg-gray-900 p-6 shadow-md">
             <div className="text-center">
@@ -109,7 +118,6 @@ const CardSection: React.FC<TabSwitcherProps> = () => {
               />
             </div>
           </div>
-
           {/* Modals on the right side */}
           <div className="fixed right-1 top-3/4 flex -translate-y-1/2 transform flex-col space-y-2">
             {cardList.map((card, index) => (

@@ -23,9 +23,10 @@ export default function Home() {
       <CoreGrid />
       <YouTubeVideo
         videoId="vx5mXiOh5Ec"
-        title="invideo ai 1080 Revolutionize Your Shipping Routes"
-        subtitle="Your Video Subtitle"
-        description="Your video description goes here."
+        title="Take a look with our Context"
+        subtitle="Simple Shipping Route Management System (SRMS)"
+        description="    
+This project develops towards a transnational shipping company, here, we have points (destination and departure points) as well as routes (paths between points). The system allows users to create accounts, create roles with specified permissions, and those with those permissions will only be able to do permitted actions. In addition, we send emails to users when there are changes to their accounts."
       />
 
       <GradientWrapper>
