@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -61,7 +61,7 @@ const Login: FC = () => {
         setSnackbarMessage('Login successful!');
         setSnackbarOpen(true);
         // setTimeout(() => router.push('/'), 1000); // Redirect after 1 second
-        if (pathname === 'login') router.push('/');
+        if (pathname === '/login') router.push('/');
       } catch (error) {
         setSnackbarMessage('Login failed. Please check your credentials.');
         setSnackbarOpen(true);
@@ -69,7 +69,12 @@ const Login: FC = () => {
       }
     }
   };
-
+  useEffect(() => {
+    if (pathname !== '/login') {
+      setSnackbarMessage('Please login!');
+      setSnackbarOpen(true);
+    }
+  }, [pathname]);
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
@@ -114,7 +119,7 @@ const Login: FC = () => {
           </div>
           <div className="mb-4 text-right">
             <a
-              href="/forgot-password"
+              href="/password-recovery"
               className="text-sm text-blue-500 hover:underline"
             >
               forgot password ?

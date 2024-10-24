@@ -205,6 +205,7 @@ export default function AccountPageContent({
             />
           </form>
         </div>
+
         {hasPermission('account:create') && (
           <AccountModalWrapper
             onAccountCreated={() => fetchAccounts(searchTerm)}

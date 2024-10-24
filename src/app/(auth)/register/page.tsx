@@ -3,6 +3,7 @@
 import { FC, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
+import { Visibility, VisibilityOff } from '@mui/icons-material'; // Ensure this import is present
 import { register } from '@/service/authService';
 import { loginState } from '@/store/userSlice';
 import CustomSnackbar from '@/components/CustomSnackbar';
@@ -31,6 +32,16 @@ const Register: FC = () => {
     dateOfBirth: '',
   });
   const router = useRouter();
+  const [countryCode, setCountryCode] = useState('+84'); // Default country code
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+
+  const countries = [
+    { code: '+84', name: 'VN', flag: 'vn' },
+    { code: '+1', name: 'USA', flag: '🇺🇸' },
+    { code: '+44', name: 'UK', flag: '🇬🇧' },
+    { code: '+91', name: 'India', flag: '🇮🇳' },
+    // Add more countries as needed
+  ];
 
   const validateForm = () => {
     let valid = true;
@@ -100,7 +111,14 @@ const Register: FC = () => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        const response = await register(formData);
+        // Combine country code and phone number
+        const fullPhoneNumber = `${countryCode}${formData.phoneNumber}`;
+
+        const response = await register({
+          ...formData,
+          phoneNumber: fullPhoneNumber, // Use the combined phone number
+        });
+
         dispatch(
           loginState({
             username: response.data.name,
@@ -151,9 +169,9 @@ const Register: FC = () => {
             )}
           </div>
           {/* Password Field */}
-          <div className="mb-4">
+          <div className="relative mb-4">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
@@ -161,6 +179,13 @@ const Register: FC = () => {
               placeholder="Enter your password"
               className="mt-2 w-full rounded-lg border bg-white p-3 text-gray-800 placeholder-gray-500 focus:border-gray-400"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-5"
+            >
+              {showPassword ? <VisibilityOff /> : <Visibility />}
+            </button>
             {errors.password && (
               <p className="mt-2 text-sm text-red-600">{errors.password}</p>
             )}
@@ -196,7 +221,18 @@ const Register: FC = () => {
             )}
           </div>
           {/* Phone Field */}
-          <div className="mb-4">
+          <div className="mb-4 flex">
+            <select
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value)}
+              className="mr-2 rounded-lg border bg-white p-3 text-gray-800"
+            >
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.code}
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               value={formData.phoneNumber}
