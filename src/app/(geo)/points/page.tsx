@@ -22,6 +22,7 @@ import SnackbarCustom from '@/components/Snackbar';
 import { Permission } from '@/app/lib/enum';
 import { RootState, useAppDispatch } from '@/store/store';
 
+
 // Load the map component
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
 
