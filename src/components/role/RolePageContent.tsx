@@ -47,7 +47,11 @@ export default function RolePageContent({
     setIsLoading(false);
   }, [dispatch]);
 
+  const isSuperAdmin = useSelector(
+    (state: RootState) => state.user.isSuperAdmin
+  );
   const hasPermission = (permissionRequired: string) => {
+    if (isSuperAdmin) return true;
     if (permissions.length === 0) return false;
     return permissions.includes(permissionRequired);
   };

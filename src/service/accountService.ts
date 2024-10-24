@@ -53,6 +53,14 @@ export interface UpdateAccountRequest {
   address?:string
 }
 
+export interface UpdateAccountWithoutRoleRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfBirth?: Date;
+  phoneNumber?:string;
+  address?:string
+}
 
 interface ResetPasswordResponse{
   data: boolean
@@ -81,9 +89,11 @@ export const deleteAccount = async (id: string) => {
   }
 }
 
-export const updateAccount = async (id : string, data : UpdateAccountRequest) => {
+export const updateAccount = async (id : string, data : UpdateAccountWithoutRoleRequest) => {
   try {
-    const response = await axiosInstance.put(`authentication-service/account/update${id}`,data);
+    console.log(`id: ${id}`)
+    console.log(data)
+    const response = await axiosInstance.put(`authentication-service/account/update/${id}`,data);
   return response.data;
   } catch (error) {
     return false;
@@ -91,7 +101,9 @@ export const updateAccount = async (id : string, data : UpdateAccountRequest) =>
 }
 export const updateAccountWithRole = async (id : string, data : UpdateAccountRequest) => {
   try {
+    console.log(data)
     const response = await axiosInstance.put(`authentication-service/account/update-with-role/${id}`,data);
+    console.log(response)
   return response.data;
   } catch (error) {
     return false;

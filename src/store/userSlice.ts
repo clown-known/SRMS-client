@@ -6,12 +6,14 @@ interface UserState {
   isLoggedIn: boolean;
   permissions: string[]; 
   roleId: string|null;
+  isSuperAdmin:boolean;
 }
 const initialState: UserState = {
   username: null,
   isLoggedIn: false, 
   permissions: [],
-  roleId: null
+  roleId: null,
+  isSuperAdmin: false,
 };
 export const fetchUserPermissions = createAsyncThunk(
   'user/fetchUserPermissions',
@@ -46,8 +48,9 @@ export const userSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(fetchUserPermissions.fulfilled, (state, action) => {
       state.permissions = action.payload.permissions;
-      state.username = action.payload.name
-      state.roleId = action.payload.roleId
+      state.username = action.payload.name;
+      state.roleId = action.payload.roleId;
+      state.isSuperAdmin = action.payload.isSuperAdmin;
       if(!action.payload.name) state.isLoggedIn = false;
       else state.isLoggedIn = true
     });

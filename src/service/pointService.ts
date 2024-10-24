@@ -34,6 +34,7 @@ class PointService {
     async getAllPointsWithoutPagination(): Promise<PointDTO[]> {
         try {
             const response = await axiosInstance.get<{ data: PointDTO[] }>(`${this.url}/all`)
+            // console.log(response.data)
             return response.data.data;
         } catch (error) {
             throw new Error("Fetch all points without pagination failed");
@@ -42,7 +43,7 @@ class PointService {
 
     async getPointById(id: string): Promise<PointDTO> {
         try {
-            const response = await axiosInstance.get<{ data: PointDTO }>(`${this.url}/${id}`);
+            const response = await axiosInstance.get<{ data: PointDTO }>(`${this.url}/get-by-id//${id}`);
             return response.data.data;
         } catch (error) {
             throw new Error("Fetch point detail failed");

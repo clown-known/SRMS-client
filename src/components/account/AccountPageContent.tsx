@@ -37,6 +37,7 @@ export default function AccountPageContent({
   const router = useRouter();
   const dispatch = useAppDispatch();
   const permission = useSelector((state: RootState) => state.user.permissions); // Get permission from global state
+
   const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<AccountsPage>(initialAccounts);
   const [searchTerm, setSearchTerm] = useState(
@@ -52,7 +53,11 @@ export default function AccountPageContent({
     setIsLoading(false);
   }, [dispatch]);
 
+  const isSuperAdmin = useSelector(
+    (state: RootState) => state.user.isSuperAdmin
+  );
   const hasPermission = (permissionRequired: string) => {
+    if (isSuperAdmin) return true;
     if (permission.length === 0) return false;
     return permission.includes(permissionRequired);
   };
@@ -130,9 +135,11 @@ export default function AccountPageContent({
     data: UpdateAccountRequest
   ) => {
     try {
-      if (hasPermission('account:assign-role'))
+      if (hasPermission('account:assign-role')) {
         await updateAccountWithRole(id, data);
-      else await updateAccount(id, data);
+      } else {
+        await updateAccount(id, data);
+      }
       fetchAccounts(searchTerm);
       setSnackbarMessage('Account updated successfully!');
       setSnackbarOpen(true);
@@ -179,12 +186,12 @@ export default function AccountPageContent({
     setSnackbarOpen(false);
   };
 
-  // useEffect(() => {
-  //   const searchTerm = searchParams.get('search') || '';
-  //   const currentPage = parseInt(searchParams.get('page') || '1', 10);
-  //   setPage(currentPage);
-  //   fetchAccounts(searchTerm, currentPage);
-  // }, [fetchAccounts, searchParams]);
+  useEffect(() => {
+    const searchTerm = searchParams.get('search') || '';
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+    setPage(currentPage);
+    fetchAccounts(searchTerm, currentPage);
+  }, [fetchAccounts, searchParams]);
 
   return (
     <div className="bg-gray-100 px-4 py-4">
