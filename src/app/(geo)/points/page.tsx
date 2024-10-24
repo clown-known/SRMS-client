@@ -18,6 +18,9 @@ import SearchInput from '@/components/geo/SearchInput';
 import PointsList from '@/components/points/PointList';
 import PointForm from '@/components/points/PointForm';
 import SnackbarCustom from '@/components/Snackbar';
+import { Permission } from '@/app/lib/enum';
+import { useAppDispatch } from '@/store/store';
+import { useSelector } from 'react-redux';
 
 // Load the map component
 const Map = dynamic(() => import('@/components/geo/Map'), { ssr: false });
@@ -54,6 +57,8 @@ const Points = () => {
 
   const page = parseInt(searchParams.get('page') || '1', 10);
   const [mapKey, setMapKey] = useState(0);
+  const dispatch = useAppDispatch();
+  const permission = useSelector((state: RootState) => state.user.permissions);
 
   // Fetch points
   const fetchPoints = useCallback(
@@ -150,14 +155,14 @@ const Points = () => {
     setOpenListDrawer(false);
     setTimeout(() => {
       setOpenCreateDrawer(true);
-    }, 300); // Match the drawer transition time
+    }, 300);
   };
 
   const handleCloseCreateForm = () => {
     setOpenCreateDrawer(false);
     setTimeout(() => {
       setOpenListDrawer(true);
-    }, 300); // Match the drawer transition time
+    }, 300);
     resetCreateForm();
   };
 
@@ -168,7 +173,6 @@ const Points = () => {
     }
   };
 
-  // Other handlers
   const handleDelete = async () => {
     if (!selectedPointId) return;
     try {
@@ -204,6 +208,10 @@ const Points = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
+  };
+
+  const hasPermission = (permissionRequired: string) => {
+    return permission.includes(permissionRequired);
   };
 
   return (
@@ -275,19 +283,21 @@ const Points = () => {
                 onKeyDown={handleKeyPress}
               />
             </Box>
-            <IconButton
-              onClick={handleOpenCreateForm}
-              sx={{
-                backgroundColor: 'darkgreen',
-                color: 'white',
-                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-              }}
-              size="small"
-            >
-              <Tooltip title="Add new point" arrow>
-                <AddIcon fontSize="small" />
-              </Tooltip>
-            </IconButton>
+            {hasPermission(Permission.CREATE_POINT) && (
+              <IconButton
+                onClick={handleOpenCreateForm}
+                sx={{
+                  backgroundColor: 'darkgreen',
+                  color: 'white',
+                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+                }}
+                size="small"
+              >
+                <Tooltip title="Add new point" arrow>
+                  <AddIcon fontSize="small" />
+                </Tooltip>
+              </IconButton>
+            )}
           </Box>
 
           <PointsList
@@ -299,6 +309,7 @@ const Points = () => {
             }
             handleOpenDialog={handleOpenDialog}
             handlePointClick={handlePointClick}
+            hasPermission={hasPermission}
           />
 
           <Box className="mt-3 flex justify-center">
@@ -320,7 +331,7 @@ const Points = () => {
           <Box className="mb-6 flex items-center">
             <IconButton onClick={handleCloseCreateForm}>
               <ArrowBackIcon />
-              <Typography variant='h6'> Back to points</Typography>
+              <Typography variant="h6"> Back to points</Typography>
             </IconButton>
           </Box>
 

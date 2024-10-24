@@ -71,22 +71,16 @@ const Routes = () => {
     }
   }, [page, searchParams, fetchRoutes]);
 
-  // Handle search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const handleSearchSubmit = () => {
-    // Update URL with search params without navigation
     const url = new URL(window.location.href);
     url.searchParams.set('page', '1');
     url.searchParams.set('searchKey', searchTerm);
     window.history.pushState({}, '', url);
     fetchRoutes(1, searchTerm);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSearchSubmit();
   };
 
   const handleDeleteClick = (id: string) => {
@@ -147,14 +141,12 @@ const Routes = () => {
   const handleToggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
     if (!drawerOpen) {
-      // When opening drawer, show the last active drawer
       if (openCreateDrawer) {
         setOpenCreateDrawer(true);
       } else {
         setOpenRoutesDrawer(true);
       }
     } else {
-      // When closing drawer, hide both
       setOpenRoutesDrawer(false);
       setOpenCreateDrawer(false);
     }
