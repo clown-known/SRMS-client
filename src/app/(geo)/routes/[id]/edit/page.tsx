@@ -2,12 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  Box,
-  Button,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Button, Typography, IconButton } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import dynamic from 'next/dynamic';
 import { calculateDistance } from '@/utils/distanceUtils';
@@ -48,12 +43,12 @@ const RouteEdit = () => {
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<PointDTO | null>(null);
-  const [isCardVisible, setIsCardVisible] = useState(false)
+  const [isCardVisible, setIsCardVisible] = useState(false);
 
   const fetchPoints = async (search: string = '') => {
     try {
       setIsLoading(true);
-      const response = await pointService.getAllPoints(1, 10, search); 
+      const response = await pointService.getAllPoints(1, 50, search);
 
       if (response && response.data && response.data.data) {
         setPoints(response.data.data);
@@ -78,14 +73,17 @@ const RouteEdit = () => {
     setDialogOpen(false);
   };
 
-  const debouncedFetchPoints = debounceFetching((search: string) => {
-    fetchPoints(search);
-  }, 2000);
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = event.target.value;
-    setSearchTerm(searchTerm);
-    debouncedFetchPoints(searchTerm);
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      fetchPoints(searchTerm);
+    }
   };
 
   const updateRouteOnMap = useCallback(
@@ -111,42 +109,36 @@ const RouteEdit = () => {
         setStartPointId(point.id);
         setStartPointName(point.name);
         if (endPointId) {
-          const endPoint = points.find((p) => p.id === endPointId);
-          if (endPoint) {
-            const distance = calculateDistance(
-              point.latitude,
-              point.longitude,
-              endPoint.latitude,
-              endPoint.longitude
-            );
-            const estimatedTime = calculateTime(distance);
-            setEstimatedTime(estimatedTime);
-            setDistance(distance.toFixed(2));
-          }
+          const distance = calculateDistance(
+            point.latitude,
+            point.longitude,
+            route?.endPoint.latitude || 0,
+            route?.endPoint.longitude || 0
+          );
+          const estimatedTime = calculateTime(distance);
+          setEstimatedTime(estimatedTime);
+          setDistance(distance.toFixed(2));
         }
         updateRouteOnMap(point, null);
       } else {
         setEndPointId(point.id);
         setEndPointName(point.name);
         if (startPointId) {
-          const startPoint = points.find((p) => p.id === startPointId);
-          if (startPoint) {
-            const distance = calculateDistance(
-              startPoint.latitude,
-              startPoint.longitude,
-              point.latitude,
-              point.longitude
-            );
-            setDistance(distance.toFixed(2));
-            const estimatedTime = calculateTime(distance);
-            setEstimatedTime(estimatedTime);
-          }
+          const distance = calculateDistance(
+            route?.startPoint.latitude || 0,
+            route?.startPoint.longitude || 0,
+            point.latitude,
+            point.longitude
+          );
+          setDistance(distance.toFixed(2));
+          const estimatedTime = calculateTime(distance);
+          setEstimatedTime(estimatedTime);
         }
         updateRouteOnMap(null, point);
       }
       handleCloseDialog();
     },
-    [dialogType, endPointId, points, startPointId, updateRouteOnMap]
+    [dialogType, endPointId, startPointId, route, updateRouteOnMap]
   );
 
   useEffect(() => {
@@ -322,7 +314,8 @@ const RouteEdit = () => {
             onClose={handleCloseDialog}
             dialogType={dialogType}
             searchTerm={searchTerm}
-            handleSearch={handleSearch}
+            handleSearch={handleSearchChange}
+            handleKeyDown={handleSearchKeyDown}
             isLoading={isLoading}
             error={error}
             points={points}

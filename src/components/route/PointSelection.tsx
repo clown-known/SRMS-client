@@ -4,13 +4,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   List,
   ListItemButton,
   ListItemText,
   Button,
 } from '@mui/material';
 import Loading from '@/components/Loading';
+import SearchInput from '../geo/SearchInput';
 
 interface PointSelectionDialogProps {
   open: boolean;
@@ -18,6 +18,7 @@ interface PointSelectionDialogProps {
   dialogType: 'start' | 'end';
   searchTerm: string;
   handleSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   isLoading: boolean;
   error: string;
   points: PointDTO[];
@@ -30,6 +31,7 @@ const PointSelectionDialog: React.FC<PointSelectionDialogProps> = ({
   dialogType,
   searchTerm,
   handleSearch,
+  handleKeyDown,
   isLoading,
   error,
   points,
@@ -41,16 +43,14 @@ const PointSelectionDialog: React.FC<PointSelectionDialogProps> = ({
         {dialogType === 'start' ? 'Select Start Point' : 'Select End Point'}
       </DialogTitle>
       <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Search Points"
-          type="text"
-          fullWidth
-          variant="standard"
-          value={searchTerm}
-          onChange={handleSearch}
-        />
+        <div className="mt-2 mb-4">
+          <SearchInput
+            value={searchTerm}
+            onChange={handleSearch}
+            onKeyDown={handleKeyDown}
+            placeholder="Search points..."
+          />
+        </div>
         <List>
           {isLoading && <Loading />}
           {error && (

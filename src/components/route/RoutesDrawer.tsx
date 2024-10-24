@@ -116,16 +116,21 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
         {isLoading && <Loading />}
         {!isLoading && error && <Typography color="error">{error}</Typography>}
         {!isLoading && !error && routes.length > 0 && (
-          <TableContainer component={Paper} sx={{ maxHeight: '100%' }}>
+          <TableContainer
+            component={Paper}
+            sx={{ maxHeight: '100%', overflowX: 'auto' }}
+          >
             <Table stickyHeader sx={{ minWidth: 650 }} size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox" sx={{ width: '1%' }} />
+                  <TableCell padding="checkbox" sx={{ width: '40px' }} />
                   <TableCell sx={{ width: '25%' }}>Name</TableCell>
-                  <TableCell sx={{ width: '25%' }}>Start Point</TableCell>
-                  <TableCell sx={{ width: '25%' }}>End Point</TableCell>
-                  <TableCell sx={{ width: '20%' }}>Distance (km)</TableCell>
-                  <TableCell sx={{ width: '1%' }}>Actions</TableCell>
+                  <TableCell sx={{ width: '30%' }}>Start Point</TableCell>
+                  <TableCell sx={{ width: '30%' }}>End Point</TableCell>
+                  {hasPermission(Permission.UPDATE_ROUTE) &&
+                    hasPermission(Permission.DELETE_ROUTE) && (
+                      <TableCell sx={{ width: '100px' }}>Actions</TableCell>
+                    )}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -141,6 +146,7 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
                   >
                     <TableCell padding="checkbox">
                       <Checkbox
+                        size="small"
                         disabled
                         checked={selectedRoutes.includes(route.id)}
                         onChange={() => handleCheckboxChange(route.id)}
@@ -150,34 +156,13 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
                         }
                       />
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {route.name}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <TableCell sx={{ maxWidth: 0 }}>{route.name}</TableCell>
+                    <TableCell sx={{ maxWidth: 0 }}>
                       {route.startPoint?.name || 'N/A'}
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <TableCell sx={{ maxWidth: 0 }}>
                       {route.endPoint?.name || 'N/A'}
                     </TableCell>
-                    <TableCell>{route.distance}</TableCell>
                     <TableCell>
                       <Box display="flex" alignItems="center">
                         {hasPermission(Permission.UPDATE_ROUTE) && (
@@ -185,9 +170,10 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
                             onClick={() =>
                               router.push(`/routes/${route.id}/edit`)
                             }
+                            size="small"
                           >
                             <Tooltip title="Edit route" arrow>
-                              <EditIcon />
+                              <EditIcon fontSize="small" />
                             </Tooltip>
                           </IconButton>
                         )}
@@ -197,6 +183,7 @@ const RoutesDrawer: React.FC<RoutesDrawerProps> = ({
                               e.stopPropagation();
                               handleDeleteClick(route.id);
                             }}
+                            size="small"
                           >
                             <Tooltip title="Remove route" arrow>
                               <DeleteIcon />

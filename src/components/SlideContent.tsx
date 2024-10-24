@@ -145,7 +145,7 @@ const HomeSlider: React.FC = () => {
       title: 'FRONTEND OVERVIEW',
       subtitle: 'Container Liner Operation Solution 2',
       description:
-        "OPUS Container is a maritime container solution that offers efficient management by integrating the entire business in container operations. From shipment booking to its safe arrival at the customer's destination, it can perform systematic process management through centralized control, which meets global standard work methods and processes.",
+        'The SRMS (System Resource Management System) integrated with the Leaflet library offers a robust solution for online map management, enabling efficient control and integration of mapping activities. With Leaflet, users can effortlessly create interactive maps, from placing markers to drawing routes, all through a simple and intuitive interface.',
       imageUrl: '/assets/images/frontend.png',
       redirectUrl: 'https://github.com/clown-known/SRMS-client',
     },
