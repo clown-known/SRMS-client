@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
 });
 const refreshAccessToken = async () => {
   const refreshToken = Cookies.get('refreshToken');
-  if(refreshToken) return null;
+  if(!refreshToken) return null;
   const response = await axios.get(`http://localhost:3000/authentication-service/auth/refresh`, {
     headers: {
       'Authorization': `Bearer ${refreshToken}`
@@ -25,7 +25,6 @@ const refreshAccessToken = async () => {
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = Cookies.get('token');
-    console.log(token)
     // const token = localStorage.getItem('token'); // Example: Get token from localStorage
     if (token) {
       config.headers.Authorization = `Bearer ${token}`; // Add token to Authorization header

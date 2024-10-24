@@ -64,7 +64,7 @@ interface AssignRoleToUserRequest {
 }
 
 export const getAccounts = async (page: number = 1, take: number = 10): Promise<AccountsPage> => {
-  // try{
+  // try{ 
   const response = await axiosInstance.get<AccountsResponse>(`authentication-service/account?page=${page}&take=${take}`);
   return response.data.data;
   // } catch (error) {

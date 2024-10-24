@@ -1,12 +1,14 @@
 'use client';
 
 import { FC, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { login } from '@/service/authService';
 import { loginState } from '@/store/userSlice';
 import CustomSnackbar from '@/components/CustomSnackbar';
 import RandomBackground from '@/components/RandomBackground';
+import withoutAuth from '@/hoc/withoutAuth';
 
 const Login: FC = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +18,8 @@ const Login: FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const router = useRouter();
   const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const pathname = usePathname();
 
   const validateForm = () => {
     let valid = true;
@@ -56,10 +60,12 @@ const Login: FC = () => {
         );
         setSnackbarMessage('Login successful!');
         setSnackbarOpen(true);
-        setTimeout(() => router.push('/'), 1000); // Redirect after 1 second
+        // setTimeout(() => router.push('/'), 1000); // Redirect after 1 second
+        if (pathname === 'login') router.push('/');
       } catch (error) {
         setSnackbarMessage('Login failed. Please check your credentials.');
         setSnackbarOpen(true);
+        setPassword('');
       }
     }
   };
@@ -87,14 +93,21 @@ const Login: FC = () => {
               <p className="mt-2 text-sm text-red-600">{errors.email}</p>
             )}
           </div>
-          <div className="mb-4">
+          <div className="relative mb-4">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="mt-2 w-full rounded-lg border bg-white p-3 text-gray-800 placeholder-gray-500 focus:border-gray-400"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-5"
+            >
+              {showPassword ? <VisibilityOff /> : <Visibility />}
+            </button>
             {errors.password && (
               <p className="mt-2 text-sm text-red-600">{errors.password}</p>
             )}
@@ -139,4 +152,5 @@ const Login: FC = () => {
   );
 };
 
-export default Login;
+export default withoutAuth(Login);
+// export default Login;
